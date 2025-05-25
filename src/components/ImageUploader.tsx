@@ -64,7 +64,7 @@ export const ImageUploader = ({ onImagesChange }: ImageUploaderProps) => {
             />
             <button
               onClick={() => removeImage(index)}
-              className="absolute -top-2 -right-2 bg-red-500 !important text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+              className="absolute -top-2 -right-2 bg-red-500!  text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
             >
               ×
             </button>

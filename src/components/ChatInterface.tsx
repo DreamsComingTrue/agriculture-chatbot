@@ -3,6 +3,7 @@ import type { Message } from '@/types/types';
 import { promptGenerator } from '@/lib/promptGenerator';
 import { generateResponse } from '@/lib/ollamaService';
 import { ImageUploader } from './ImageUploader';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ChatInterfaceProps {
   defaultModel: string;
@@ -120,7 +121,7 @@ export const ChatInterface = ({
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">
-        {images.length > 0 ? 'Multimodal Chat' : 'Text Chat'}
+        {'Agriculture Steward'}
       </h1>
 
       <ImageUploader onImagesChange={setImages} />
@@ -132,35 +133,28 @@ export const ChatInterface = ({
               ? 'Upload images and ask questions about them'
               : 'Send a message to start chatting'}
           </p>
-        ) : (
-          messages.map((msg, i) => (
-            <div key={i} className={`mb-3 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block px-4 py-2 rounded-lg ${msg.sender === 'user'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-800'
-                }`}>
-                {msg.text}
-                {!msg.isComplete && msg.sender === 'ai' && (
-                  <span className="ml-2 inline-block h-2 w-2 animate-pulse rounded-full bg-blue-400"></span>
-                )}
-              </span>
-
-              {msg.images && msg.images.length > 0 && (
-                <div className={`flex flex-wrap gap-2 mt-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                  }`}>
-                  {msg.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`Attached ${idx}`}
-                      className="h-16 w-16 object-cover rounded"
-                    />
-                  ))}
-                </div>
+        ) : messages.map((msg, i) => (
+          <div key={i} className={`mb-6 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
+            <div className={`inline-block max-w-[90%] px-4 py-2 rounded-lg ${msg.sender === 'user'
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-100 text-gray-800'
+              }`}>
+              {msg.sender === 'ai' ? (
+                <MarkdownRenderer
+                  content={msg.text}
+                  className="text-left"
+                />
+              ) : (
+                <div className="whitespace-pre-wrap">{msg.text}</div>
+              )}
+              {!msg.isComplete && msg.sender === 'ai' && (
+                <span className="ml-2 inline-block h-2 w-2 animate-pulse rounded-full bg-blue-400"></span>
               )}
             </div>
-          ))
-        )}
+            {/* ... rest of your code ... */}
+          </div>
+        ))
+        }
         <div ref={messagesEndRef} />
       </div>
 
@@ -179,7 +173,7 @@ export const ChatInterface = ({
         {isLoading ? (
           <button
             onClick={stopGeneration}
-            className="px-6 py-3 rounded-lg font-medium bg-red-500 !important hover:bg-red-600 !important text-white"
+            className="px-6 py-3 rounded-lg font-medium bg-red-500!  hover:bg-red-600!  text-white"
           >
             Stop
           </button>
@@ -188,8 +182,8 @@ export const ChatInterface = ({
             onClick={sendMessage}
             disabled={!input.trim()}
             className={`px-6 py-3 rounded-lg font-medium ${!input.trim()
-              ? 'bg-gray-400 !important cursor-not-allowed'
-              : 'bg-blue-600 !important hover:bg-blue-700 !important text-white'
+              ? 'bg-gray-400!  cursor-not-allowed'
+              : 'bg-blue-600! hover:bg-blue-700! text-white'
               }`}
           >
             Send
