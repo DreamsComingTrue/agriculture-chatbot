@@ -13,5 +13,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
-  }
+  },
+  server: {
+    host: '0.0.0.0',  // Allow LAN/WAN access
+    port: 5173,
+    strictPort: true
+  },
 })
