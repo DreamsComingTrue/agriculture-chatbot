@@ -1,4 +1,5 @@
 import { ChatInterface } from '@/components/ChatInterface';
+import './locales/i18n';
 
 function App() {
   return (

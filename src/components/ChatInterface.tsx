@@ -4,6 +4,8 @@ import { promptGenerator } from '@/lib/promptGenerator';
 import { generateResponse } from '@/lib/ollamaService';
 import { ImageUploader } from './ImageUploader';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface ChatInterfaceProps {
   defaultModel: string;
@@ -20,6 +22,7 @@ export const ChatInterface = ({
   const [images, setImages] = useState<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -119,9 +122,10 @@ export const ChatInterface = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="w-screen mx-auto p-6 bg-gray-50 min-h-screen">
+      <LanguageSwitcher />
       <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">
-        {'Agriculture Steward'}
+        {t('chat.title')}
       </h1>
 
       <ImageUploader onImagesChange={setImages} />
@@ -129,9 +133,7 @@ export const ChatInterface = ({
       <div className="bg-white rounded-lg shadow-md p-4 h-96 overflow-y-auto mb-4">
         {messages.length === 0 ? (
           <p className="text-gray-500 text-center mt-4">
-            {images.length > 0
-              ? 'Upload images and ask questions about them'
-              : 'Send a message to start chatting'}
+            {t('chat.empty')}
           </p>
         ) : messages.map((msg, i) => (
           <div key={i} className={`mb-6 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
@@ -164,9 +166,9 @@ export const ChatInterface = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder={images.length > 0
-            ? "Ask about the images..."
-            : "Type your message..."}
+          placeholder={t(images.length > 0
+            ? 'chat.file_placeholder'
+            : 'chat.placeholder')}
           className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isLoading}
         />
@@ -186,7 +188,7 @@ export const ChatInterface = ({
               : 'bg-blue-600! hover:bg-blue-700! text-white'
               }`}
           >
-            Send
+            {t('chat.send')}
           </button>
         )}
       </div>

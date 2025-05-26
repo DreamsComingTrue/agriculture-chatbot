@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type ImageUploaderProps = {
   onImagesChange: (images: string[]) => void;
@@ -6,6 +7,7 @@ type ImageUploaderProps = {
 
 export const ImageUploader = ({ onImagesChange }: ImageUploaderProps) => {
   const [images, setImages] = useState<string[]>([]);
+  const { t } = useTranslation();
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -40,12 +42,13 @@ export const ImageUploader = ({ onImagesChange }: ImageUploaderProps) => {
   return (
     <div className="mb-4">
       <label className="block mb-2 text-sm font-medium text-gray-700">
-        Upload Images (for multimodal models)
+        {t('chat.file_uploader_title')}
       </label>
       <input
         type="file"
         accept="image/*"
         multiple
+        placeholder={t('chat.file_uploader_placeholder')}
         onChange={handleImageUpload}
         className="block w-full text-sm text-gray-500
           file:mr-4 file:py-2 file:px-4

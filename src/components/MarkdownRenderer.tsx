@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
-import type { PluggableList } from 'react-markdown/lib/react-markdown';
+import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 interface MarkdownRendererProps {
   content: string;
