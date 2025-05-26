@@ -3,7 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
-import { PluggableList } from 'react-markdown/lib/react-markdown';
+// @ts-expect-error known issue
+import type { PluggableList } from 'react-markdown/lib/react-markdown';
 
 interface MarkdownRendererProps {
   content: string;
@@ -25,9 +26,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          // @ts-expect-error known issue
+          code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return !inline ? (
+            return inline ? (
               <div className="relative">
                 <div className="absolute right-2 top-1 text-xs text-gray-500">
                   {match?.[1] || 'code'}
