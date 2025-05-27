@@ -5,10 +5,6 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  define: {
-    // Pass environment variables to the app
-    'import.meta.env.OLLAMA_DOMAIN': JSON.stringify(process.env.OLLAMA_DOMAIN),
-  },
   plugins: [
     tailwindcss(),
     react()

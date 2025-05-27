@@ -7,11 +7,10 @@ export const generateResponse = async (
   signal?: AbortSignal
 ) => {
   try {
-    const response = await fetch(`${import.meta.env.OLLAMA_DOMAIN}/api/generate`, {
+    const response = await fetch(`${import.meta.env.VITE_OLLAMA_DOMAIN}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*' // Not always respected
       },
       body: JSON.stringify(request),
       signal
