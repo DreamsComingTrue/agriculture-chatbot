@@ -7,7 +7,7 @@ export const generateResponse = async (
   signal?: AbortSignal
 ) => {
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const response = await fetch(`${import.meta.env.OLLAMA_DOMAIN}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
