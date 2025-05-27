@@ -11,7 +11,6 @@ export const generateResponse = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*' // Not always respected
       },
       body: JSON.stringify(request),
       signal
