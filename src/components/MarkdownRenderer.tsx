@@ -3,8 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
-// @ts-expect-error known issue
-import type { PluggableList } from 'react-markdown/lib/react-markdown';
+import type { PluggableList } from 'unified';
 
 interface MarkdownRendererProps {
   content: string;

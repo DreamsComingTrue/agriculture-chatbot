@@ -33,7 +33,7 @@ export const getAgriculturePromptWithoutImage = (input: string): string[] => {
   Describe the restrictions that the role needs to follow during the interaction process." mode="input"#}Avoid speculation – Base answers on verified agricultural research.
   Consider regional factors – Account for climate, soil type, and local farming practices.
   Prioritize sustainability – Promote eco-friendly and cost-effective solutions.
-`, 'old versions']
+`, 'prompt1', 'prompt2']
 }
 
 /**
