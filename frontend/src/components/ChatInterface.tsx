@@ -14,12 +14,14 @@ interface ChatInterfaceProps {
 
 export const ChatInterface = ({
   defaultModel = 'deepseek-r1:7b',
-  multimodalModel = 'qwen:2.5-vl'
+  multimodalModel = 'qwen:2.5vl:7b'
 }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  // Add this new state for tracking image reset
+  const [shouldResetImages, setShouldResetImages] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
@@ -41,7 +43,6 @@ export const ChatInterface = ({
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setImages([]);
 
     // Initialize AI message
     setMessages(prev => [...prev, {
@@ -76,6 +77,10 @@ export const ChatInterface = ({
               return updated;
             });
           }
+          // Check if response is complete and we have images
+          if (data.done && userMessage.images) {
+            setShouldResetImages(true);
+          }
         },
         (error) => {
           console.error('Error:', error);
@@ -107,6 +112,14 @@ export const ChatInterface = ({
     }
   };
 
+  // Add this useEffect to handle image reset
+  useEffect(() => {
+    if (shouldResetImages) {
+      setImages([]);
+      setShouldResetImages(false);
+    }
+  }, [shouldResetImages]);
+
   const stopGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -127,8 +140,6 @@ export const ChatInterface = ({
       <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">
         {t('chat.title')}
       </h1>
-
-      <ImageUploader onImagesChange={setImages} />
 
       <div className="bg-white rounded-lg shadow-md p-4 h-96 overflow-y-auto mb-4">
         {messages.length === 0 ? (
@@ -160,6 +171,13 @@ export const ChatInterface = ({
         <div ref={messagesEndRef} />
       </div>
 
+      <div className="flex gap-2">
+        <ImageUploader
+          onImagesChange={setImages}
+          disabled={isLoading}
+          resetTrigger={shouldResetImages}
+        />
+      </div>
       <div className="flex gap-2">
         <input
           type="text"

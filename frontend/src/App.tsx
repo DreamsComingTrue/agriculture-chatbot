@@ -6,7 +6,7 @@ function App() {
     <div className="App">
       <ChatInterface
         defaultModel="deepseek-r1:7b"
-        multimodalModel="qwen:2.5-vl"
+        multimodalModel="qwen2.5vl:7b"
       />
     </div>
   );
