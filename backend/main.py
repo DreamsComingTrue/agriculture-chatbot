@@ -3,7 +3,7 @@ import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from langchain.chains import ConversationChain
-from langchain.llms import Ollama
+from langchain_ollama import OllamaLLM
 
 from user_memory import UserMemoryManager
 
@@ -14,8 +14,8 @@ CORS(app)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # 初始化模型
-qwen_model = Ollama(model="qwen2.5vl:7b")
-deepseek_model = Ollama(model="deepseek-r1:7b")
+qwen_model = OllamaLLM(model="qwen2.5vl:7b")
+deepseek_model = OllamaLLM(model="deepseek-r1:7b")
 
 # 初始化记忆管理器
 user_memory_manager = UserMemoryManager()
@@ -62,4 +62,4 @@ def analyze():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
