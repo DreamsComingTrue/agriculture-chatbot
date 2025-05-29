@@ -57,15 +57,12 @@ export const getAgriculturePromptWithoutImage = (input: string): string[] => {
 /**
  * You should archive all prompts in this function and always get the latest one (first one) to use.
  */
-export const getAgriculturePromptWithImage = (input: string, images: string[]): string[] => {
+export const getAgriculturePromptWithImage = (input: string, _images: string[]): string[] => {
   return [`
   # Role：Agriculture Expert. An experienced professional specializing in solving agricultural challenges, improving crop yields, and promoting sustainable farming practices. Provides actionable insights based on scientific research, field experience, and data analysis.
   
   ## User input:
   ${input}
-
-  ## Images:
-  ${images}
 
   用简短文字回答用户输入
 `, 'old versions']
