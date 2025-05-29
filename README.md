@@ -1,9 +1,11 @@
-# Agriculture Assistant 农业助手
+# Agriculture Assistant
 
-## How to build up
+## Desc
+
+This is a project that enhances the power of LLM to be an agriculture assistant.
+
+## Start up your project locally
 
 ```bash
-cd agriculture-chatbot/
-pnpm i
-pnpm run dev
+sh ./start-service.sh
 ```

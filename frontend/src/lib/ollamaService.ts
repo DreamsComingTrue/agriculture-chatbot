@@ -7,12 +7,25 @@ export const generateResponse = async (
   signal?: AbortSignal
 ) => {
   try {
+    // Convert images to base64 if they exist
+    const payload = request.images?.length
+      ? {
+        ...request,
+        images: request.images.map(img => {
+          // Remove data URL prefix if present
+          return img.startsWith('data:')
+            ? img.split(',')[1]
+            : img;
+        })
+      }
+      : request;
+
     const response = await fetch(`${import.meta.env.VITE_OLLAMA_DOMAIN}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(payload),
       signal
     });
 
@@ -25,10 +38,14 @@ export const generateResponse = async (
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let isFirstChunk = true;
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        onData({ model: request.model, done: true }); // Explicit final chunk
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -36,6 +53,13 @@ export const generateResponse = async (
       for (let i = 0; i < lines.length - 1; i++) {
         try {
           const parsed: OllamaResponse = JSON.parse(lines[i]);
+
+          // For multimodal models, the first chunk might be empty
+          if (isFirstChunk && request.images?.length && !parsed.response) {
+            isFirstChunk = false;
+            continue;
+          }
+
           onData(parsed);
         } catch (_e) {
           console.error('Error parsing line:', lines[i]);

@@ -1,0 +1,37 @@
+# 虚拟环境
+venv/
+env/
+.pyenv/
+__pycache__/
+
+# 字节码
+*.pyc
+*.pyo
+*.pyd
+
+# 分发和构建产物
+dist/
+build/
+*.egg-info/
+*.egg
+
+# 日志与数据库
+*.log
+*.sqlite3
+
+# 测试产物
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE 和编辑器缓存
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 环境变量文件
+.env
+.env.local
+.env.development
+.env.production
