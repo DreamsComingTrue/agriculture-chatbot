@@ -20,7 +20,8 @@ export const generateResponse = async (
       }
       : request;
 
-    const response = await fetch(`${import.meta.env.VITE_OLLAMA_DOMAIN}/api/generate`, {
+    const domain = window.location.hostname;
+    const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
