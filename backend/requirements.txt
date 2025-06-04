@@ -1,5 +1,8 @@
 Flask
+pydantic
 langchain
+langchain-core
 langchain-ollama
-langchain_community
-ollama
+typing
+
+uvicorn # ASGI server for production

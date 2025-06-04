@@ -12,12 +12,10 @@ export type OllamaRequest = {
   images?: string[];
 };
 
-export type OllamaResponse = {
-  model: string;
-  response?: string;
-  done?: boolean;
-  error?: string;
-};
+export type OllamaResponse =
+  | { type: 'delta'; token: string; model: string }
+  | { type: 'done'; model?: string }
+  | { type: 'error'; message: string; model?: string };
 
 export type PromptGenerator = {
   generate: (input: string, images?: string[]) => string;

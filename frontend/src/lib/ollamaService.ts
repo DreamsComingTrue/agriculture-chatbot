@@ -21,7 +21,7 @@ export const generateResponse = async (
       : request;
 
     const domain = window.location.hostname;
-    const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/api/generate`, {
+    const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,33 +39,44 @@ export const generateResponse = async (
 
     const decoder = new TextDecoder();
     let buffer = '';
-    let isFirstChunk = true;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        onData({ model: request.model, done: true }); // Explicit final chunk
+        onData({ model: request.model, type: 'done' });
         break;
       }
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
+      const lines = buffer.split('\n\n');
 
       for (let i = 0; i < lines.length - 1; i++) {
-        try {
-          const parsed: OllamaResponse = JSON.parse(lines[i]);
+        const line = lines[i].trim();
+        if (!line.startsWith('data:')) continue;
 
-          // For multimodal models, the first chunk might be empty
-          if (isFirstChunk && request.images?.length && !parsed.response) {
-            isFirstChunk = false;
-            continue;
+        const jsonPart = line.replace(/^data:\s*/, '');
+        try {
+          const parsed = JSON.parse(jsonPart);
+
+          switch (parsed.type) {
+            case 'delta':
+              onData({ type: 'delta', token: parsed.token, model: request.model });
+              break;
+            case 'done':
+              onData({ type: 'done', model: request.model });
+              break;
+            case 'error':
+              onError(new Error(parsed.message));
+              break;
+            default:
+              console.warn('Unknown message type:', parsed.type);
           }
 
-          onData(parsed);
         } catch (_e) {
-          console.error('Error parsing line:', lines[i]);
+          console.error('Failed to parse JSON chunk:', jsonPart);
         }
       }
+
       buffer = lines[lines.length - 1];
     }
   } catch (error) {

@@ -66,19 +66,19 @@ export const ChatInterface = ({
           images: userMessage.images
         },
         (data) => {
-          if (data.response) {
+          if (data.type == 'delta') {
             setMessages(prev => {
               const updated = [...prev];
               const lastIdx = updated.length - 1;
               updated[lastIdx] = {
                 ...updated[lastIdx],
-                text: (updated[lastIdx].text || '') + data.response
+                text: (updated[lastIdx].text || '') + data.token
               };
               return updated;
             });
           }
           // Check if response is complete and we have images
-          if (data.done && userMessage.images) {
+          if (data.type == 'done' && userMessage.images) {
             setShouldResetImages(true);
           }
         },
