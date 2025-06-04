@@ -1,18 +1,37 @@
-from langchain.memory import ConversationSummaryMemory
+from typing import Any, Dict, List
+
+from langchain_core.memory import BaseMemory
+from langchain_core.runnables import Runnable
+from pydantic import Field, PrivateAttr
 
 
-class WindowedSummaryMemory(ConversationSummaryMemory):
-    def __init__(self, llm, max_window=10, *args, **kwargs):
-        super().__init__(llm=llm, *args, **kwargs)
-        self.max_window = max_window
-        self.history = []  # 存储对话历史
+class WindowedSummaryMemory(BaseMemory):
+    llm: Runnable
+    max_window: int = Field(default=10)
+    memory_key: str = Field(default="history")
+    _history: List[Dict[str, Any]] = PrivateAttr(default_factory=list)
 
-    def save_context(self, inputs, outputs):
-        super().save_context(inputs, outputs)
-        self.history.append({"input": inputs["input"], "output": outputs["response"]})
-        if len(self.history) > self.max_window:
-            self.history.pop(0)
+    @property
+    def memory_variables(self) -> List[str]:
+        return [self.memory_key]
 
-    def load_memory_variables(self, inputs):
-        summary = super().load_memory_variables(inputs)["history"]
-        return {"history": summary}
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Return history and maintain only the last max_window items."""
+        return {self.memory_key: self._history[-self.max_window :]}
+
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, Any]) -> None:
+        """Save context from conversation to memory."""
+        self._history.append(
+            {"input": inputs.get("input", ""), "output": outputs.get("response", "")}
+        )
+        # Trim history to max_window size
+        if len(self._history) > self.max_window:
+            self._history.pop(0)
+
+    def clear(self) -> None:
+        """Clear memory contents."""
+        self._history = []
+
+    @property
+    def history(self) -> List[Dict[str, Any]]:
+        return self._history.copy()
