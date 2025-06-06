@@ -53,18 +53,18 @@ export const ChatInterface = ({
 
     // Determine which model to use
     const modelToUse = userMessage.images ? multimodalModel : defaultModel;
-    const fullPrompt = promptGenerator.generateAsAgricultureExpert(input, images);
+    // const fullPrompt = promptGenerator.generateAsAgricultureExpert(input, images);
 
     abortControllerRef.current = new AbortController();
 
     try {
       await generateResponse(
-        {
-          model: modelToUse,
-          prompt: fullPrompt,
-          stream: true,
-          images: userMessage.images
-        },
+          {
+            query: input,                    // ✅ 发送原始用户输入
+            images: userMessage.images,      // ✅ 发送图片
+            chat_id: `chat_${Date.now()}`,    // ✅ 添加chat_id
+            model: modelToUse,
+          },
         (data) => {
           if (data.type == 'delta') {
             setMessages(prev => {
@@ -105,7 +105,7 @@ export const ChatInterface = ({
       });
 
       // Save to prompt history
-      promptGenerator.addToHistory(fullPrompt, modelToUse);
+      // promptGenerator.addToHistory(fullPrompt, modelToUse);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;

@@ -1,13 +1,16 @@
 import json
 import os
+import base64
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_ollama import OllamaLLM
+from langchain.chat_models import init_chat_model
 from user_memory import UserMemoryManager
-
+from promptsArchive import get_agriculture_prompt_without_image
+from promptsArchive import get_agriculture_prompt_with_image
 # Initialize FastAPI app
 app = FastAPI()
 
@@ -30,16 +33,37 @@ deepseek_model = OllamaLLM(model="deepseek-r1:7b")
 user_memory_manager = UserMemoryManager()
 
 
-def generate_qwen_prompt(query: str, memory) -> str:
+def generate_qwen_prompt(query: str, images, memory):
     history = memory.load_memory_variables({}).get("history", "")
-    return f"""用户查询: {query}
-    对话历史: {history}"""
+
+    # 构造文本内容
+    prompt_text = get_agriculture_prompt_with_image(query, history)
+
+    # 构造 content 列表
+    content = [
+        {"type": "text", "text": prompt_text}
+    ]
+
+    # 添加图片信息
+    for img in images:
+        content.append({
+            "type": "image",
+            "source_type": "base64",
+            "data": img,  # 假设是 base64 编码字符串
+            "mime_type": "image/jpeg"
+        })
+    # 返回标准 message 列表（用于模型调用）
+    return json.dumps([
+        {
+            "role": "user",
+            "content": content
+        }
+    ])
 
 
 def generate_deepseek_prompt(query: str, memory) -> str:
     history = memory.load_memory_variables({}).get("history", "")
-    return f"""用户查询: {query}
-               对话历史:{history}"""
+    return get_agriculture_prompt_without_image(query, history)
 
 
 @app.post("/analyze")
@@ -54,6 +78,7 @@ async def analyze(request: Request):
         llm = qwen_model if images else deepseek_model
         memory = user_memory_manager.get_memory(chat_id, llm)
 
+        prompt = ""
         # Create the prompt based on model
         if images:
             prompt = generate_qwen_prompt(query, images, memory)
@@ -68,10 +93,7 @@ async def analyze(request: Request):
             full_response = ""
             try:
                 async for chunk in chain.astream(
-                    {
-                        prompt,
-                        images,
-                    },
+                    prompt,
                     config={"configurable": {"session_id": chat_id}},
                 ):
                     token = (
