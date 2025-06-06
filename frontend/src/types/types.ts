@@ -5,12 +5,13 @@ export type Message = {
   images?: string[];
 };
 
-export type OllamaRequest = {
-  model: string;
-  prompt: string;
-  stream: boolean;
+// 在types文件中更新OllamaRequest类型
+export interface OllamaRequest {
+  query: string;        // 改为query
+  chat_id: string;      // 添加chat_id
   images?: string[];
-};
+  model: string;
+}
 
 export type OllamaResponse =
   | { type: 'delta'; token: string; model: string }
