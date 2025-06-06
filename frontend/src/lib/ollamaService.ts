@@ -8,17 +8,14 @@ export const generateResponse = async (
 ) => {
   try {
     // Convert images to base64 if they exist
-    const payload = request.images?.length
-      ? {
-        ...request,
-        images: request.images.map(img => {
-          // Remove data URL prefix if present
-          return img.startsWith('data:')
-            ? img.split(',')[1]
-            : img;
-        })
-      }
-      : request;
+    // 修改 payload 生成逻辑
+        const payload = {
+          query: request.query,        // ✅ 发送query而不是prompt  
+          chat_id: request.chat_id,    // ✅ 发送chat_id
+          images: request.images?.map(img => 
+              img.startsWith('data:') ? img.split(',')[1] : img
+          ) || []
+  };
 
     const domain = window.location.hostname;
     const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/analyze`, {
