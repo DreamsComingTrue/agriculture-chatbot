@@ -1,16 +1,18 @@
 import json
 import os
-import base64
 
+import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_ollama import OllamaLLM
-from langchain.chat_models import init_chat_model
+
+from promptsArchive import (get_agriculture_prompt_with_image,
+                            get_agriculture_prompt_without_image)
 from user_memory import UserMemoryManager
-from promptsArchive import get_agriculture_prompt_without_image
-from promptsArchive import get_agriculture_prompt_with_image
+
 # Initialize FastAPI app
 app = FastAPI()
 
@@ -33,37 +35,20 @@ deepseek_model = OllamaLLM(model="deepseek-r1:7b")
 user_memory_manager = UserMemoryManager()
 
 
-def generate_qwen_prompt(query: str, images, memory):
+def generate_qwen_prompt(query: str, memory):
     history = memory.load_memory_variables({}).get("history", "")
 
     # 构造文本内容
     prompt_text = get_agriculture_prompt_with_image(query, history)
 
-    # 构造 content 列表
-    content = [
-        {"type": "text", "text": prompt_text}
-    ]
-
-    # 添加图片信息
-    for img in images:
-        content.append({
-            "type": "image",
-            "source_type": "base64",
-            "data": img,  # 假设是 base64 编码字符串
-            "mime_type": "image/jpeg"
-        })
     # 返回标准 message 列表（用于模型调用）
-    return json.dumps([
-        {
-            "role": "user",
-            "content": content
-        }
-    ])
+    return prompt_text
 
 
-def generate_deepseek_prompt(query: str, memory) -> str:
+def generate_deepseek_prompt(query: str, memory) -> list[BaseMessage]:
     history = memory.load_memory_variables({}).get("history", "")
-    return get_agriculture_prompt_without_image(query, history)
+    prompt = get_agriculture_prompt_without_image(history)
+    return [SystemMessage(prompt), HumanMessage(query)]
 
 
 @app.post("/analyze")
@@ -75,37 +60,61 @@ async def analyze(request: Request):
         chat_id = data.get("chat_id", "default")
 
         # Select model based on input
+        # Keep the qwen instance temporarily
         llm = qwen_model if images else deepseek_model
         memory = user_memory_manager.get_memory(chat_id, llm)
 
         prompt = ""
         # Create the prompt based on model
         if images:
-            prompt = generate_qwen_prompt(query, images, memory)
+            prompt = generate_qwen_prompt(query, memory)
         else:
             prompt = generate_deepseek_prompt(query, memory)
 
-        # Replace the chain construction with just the model directly
-        chain = llm.with_config(configurable={"session_id": chat_id})
+        # print(f"{prompt}------------------------------")
 
         # Async generator function
         async def generate_stream():
+            # print("into generate stream------------------------------")
             full_response = ""
             try:
-                async for chunk in chain.astream(
-                    prompt,
-                    config={"configurable": {"session_id": chat_id}},
-                ):
-                    token = (
-                        chunk.get("response")
-                        if isinstance(chunk, dict) and "response" in chunk
-                        else str(chunk)
-                    )
-                    full_response += token
+                if images:
+                    # print("qwen---------------------------------------")
+                    # Call Ollama's streaming endpoint directly for Qwen
+                    async with httpx.AsyncClient() as client:
+                        async with client.stream(
+                            "POST",
+                            "http://127.0.0.1:11434/api/generate",
+                            json={
+                                "model": "qwen2.5vl:7b",
+                                "prompt": prompt,
+                                "images": images,
+                                "stream": True,
+                            },
+                            timeout=None,
+                        ) as response:
+                            async for line in response.aiter_lines():
+                                content = json.loads(line)
+                                token = content.get("response", "")
+                                full_response += token
+                                # print(token, "--------------------------")
+                                yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
+                else:
+                    # Use LangChain astream for DeepSeek
+                    chain = llm.with_config(configurable={"session_id": chat_id})
+                    async for chunk in chain.astream(
+                        prompt,
+                        config={"configurable": {"session_id": chat_id}},
+                    ):
+                        token = (
+                            str(chunk.get("response"))
+                            if isinstance(chunk, dict) and "response" in chunk
+                            else str(chunk)
+                        )
+                        full_response += token
+                        yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
 
-                    yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
-
-                memory.save_context({"input": prompt}, {"response": full_response})
+                memory.save_context({"input": query}, {"response": full_response})
                 yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
 
             except Exception as e:
