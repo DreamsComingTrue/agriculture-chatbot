@@ -1,4 +1,5 @@
 fastapi
+httpx
 pydantic
 langchain
 langchain-core

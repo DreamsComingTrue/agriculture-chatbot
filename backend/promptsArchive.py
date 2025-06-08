@@ -3,22 +3,19 @@
 存储所有prompt模板，支持有图片和无图片两种场景
 """
 
-def get_agriculture_prompt_without_image(query: str, history: str = "") -> str:
+
+def get_agriculture_prompt_without_image(history: str = "") -> str:
     """
     获取无图片场景的农业专家prompt
-    
+
     Args:
         query: 用户查询内容
         history: 对话历史
-    
+
     Returns:
         格式化的prompt字符串
     """
     prompt = f"""#role：你是一个农业专家（包含种植业、畜牧业、渔业、林业、牧业、副业等），你需要基于科学研究、实地经验和数据分析等来解决用户的问题，并给出可行的解决方案。
-
-#user input：{query}
-
-#对话历史：{history}
 
 #goals：
 1. 提供实用的解决方案来解决常见的和复杂的问题。
@@ -34,26 +31,28 @@ def get_agriculture_prompt_without_image(query: str, history: str = "") -> str:
   ### 给出此类问题的预防措施，下次如何避免此类问题发生
 ## **4.总结**
   ### 对给出的解决方案根据成本、效果、可行性进行方案推荐
+
+#对话历史：{history}
+
 """
     return prompt
 
 
-def get_agriculture_prompt_with_image(query: str, history: str = "") -> str:
+def get_agriculture_prompt_with_image(query: str = "", history: str = "") -> str:
     """
     获取有图片场景的农业专家prompt
-    
+
     Args:
         query: 用户查询内容
         history: 对话历史
-    
+
     Returns:
         格式化的prompt字符串
     """
     prompt = f"""#role：你是一个农业专家（包含种植业、畜牧业、渔业、林业、牧业、副业等），你需要基于科学研究、实地经验和数据分析等来解决用户的问题，并给出可行的解决方案。
 
-#user input：{query}
-
-#对话历史：{history}
+# 用户输入:
+{query}
 
 #goals：
 1. 根据用户输入的图片，识别图片中的内容，有问题分析原因。
@@ -70,5 +69,8 @@ def get_agriculture_prompt_with_image(query: str, history: str = "") -> str:
   ### 给出此类问题的预防措施，下次如何避免此类问题发生
 ## **4.总结**
   ### 对给出的解决方案根据成本、效果、可行性进行方案推荐
+
+#对话历史：{history}
+
 """
     return prompt
