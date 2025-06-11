@@ -69,3 +69,14 @@ button:focus-visible {
   }
 }
 
+.chat-title {
+  font-family: Source Han Sans CN, Source Han Sans CN;
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 20px;
+  letter-spacing: 1px;
+  text-align: left;
+  background: linear-gradient(90.90deg, #ffffff 0%, #76f2e7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
