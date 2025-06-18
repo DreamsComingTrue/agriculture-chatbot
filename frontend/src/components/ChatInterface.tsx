@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import type { Message } from "@/types/types";
-import { promptGenerator } from "@/lib/promptGenerator";
 import { generateResponse } from "@/lib/ollamaService";
 import { ImageUploader } from "./ImageUploader";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -14,6 +13,7 @@ import voiceActiveIcon from "../assets/voice-active.png";
 import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
 import voiceGif from '../assets/voice-bg.gif';
+import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 
 interface ChatInterfaceProps {
   defaultModel: string;
@@ -34,11 +34,20 @@ export const ChatInterface = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const savedMessagesRef = useRef<Set<string>>(new Set());
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 简单的token估算函数
+  const estimateTokens = (text: string): number => {
+    // 简单估算：中文字符 * 1.5 + 英文单词 * 1
+    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
+    return Math.ceil(chineseChars * 1.5 + englishWords);
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -65,16 +74,27 @@ export const ChatInterface = ({
 
     // Determine which model to use
     const modelToUse = userMessage.images ? multimodalModel : defaultModel;
-    // const fullPrompt = promptGenerator.generateAsAgricultureExpert(input, images);
+    
+    try {
+      // 获取prompt版本
+      const promptVersion = await getPromptVersion(modelToUse);
+      
+      // 保存用户消息到管理后台
+    const startTime = Date.now();
+      const savedUserMessage = await saveUserMessage(input, modelToUse, promptVersion);
+    const userMessageId = savedUserMessage?.message_id;
+      
+      if (!userMessageId) {
+        throw new Error("保存用户消息失败");
+      }
 
     abortControllerRef.current = new AbortController();
 
-    try {
       await generateResponse(
           {
             query: input,                    // ✅ 发送原始用户输入
             images: userMessage.images,      // ✅ 发送图片
-            chat_id: `chat_${Date.now()}`,    // ✅ 添加chat_id
+          chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
             model: modelToUse,
           },
         (data) => {
@@ -108,7 +128,7 @@ export const ChatInterface = ({
         abortControllerRef.current?.signal
       );
 
-      // Mark as complete
+      // Mark as complete and save AI response
       setMessages(prev => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
@@ -116,11 +136,40 @@ export const ChatInterface = ({
           ...updated[lastIdx],
           isComplete: true
         };
+        
+        // 保存AI回答到管理后台
+        if (userMessageId && !savedMessagesRef.current.has(userMessageId)) {
+          savedMessagesRef.current.add(userMessageId);
+          const endTime = Date.now();
+          const responseTime = (endTime - startTime) / 1000;
+          const aiResponse = updated[lastIdx]?.text || '';
+          const estimatedTokens = estimateTokens(aiResponse);
+          
+          // 异步保存AI回答
+          saveAIResponse(
+            userMessageId, 
+            aiResponse, 
+            modelToUse, 
+            responseTime,
+            estimatedTokens,
+            promptVersion
+          ).catch(error => {
+            console.error('保存AI回答失败:', error);
+          });
+        }
         return updated;
       });
 
-      // Save to prompt history
-      // promptGenerator.addToHistory(fullPrompt, modelToUse);
+    } catch (error) {
+      console.error("发送消息失败:", error);
+      setMessages(prev => [
+        ...prev.slice(0, -1), // 移除未完成的AI消息
+        {
+          text: `发送失败: ${error instanceof Error ? error.message : '未知错误'}`,
+          sender: "ai",
+          isComplete: true
+        }
+      ]);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
