@@ -2,6 +2,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
+import asyncio
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -44,6 +45,27 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Initialize memory manager
 user_memory_manager = UserMemoryManager()
 
+# 日志工具函数
+async def log_to_management(level: str, message: str, **kwargs):
+    """异步发送日志到管理后台，不阻塞主流程"""
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post(
+                "http://localhost:8000/api/v1/log",
+                json={
+                    "level": level,
+                    "module": "ollama_service",
+                    "message": message,
+                    **kwargs
+                }
+            )
+    except Exception:
+        # 日志发送失败不影响主业务，静默处理
+        pass
+
+def log_async(level: str, message: str, **kwargs):
+    """非阻塞日志记录"""
+    asyncio.create_task(log_to_management(level, message, **kwargs))
 
 def generate_qwen_prompt(query: str, memory):
     history = memory.load_memory_variables({}).get("history", "")
@@ -128,6 +150,14 @@ async def analyze(request: Request):
                 yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
 
             except Exception as e:
+                # 🆕 记录错误日志到管理后台
+                log_async(
+                    "ERROR",
+                    f"Ollama API调用失败: {str(e)}",
+                    model_name=llm.model if hasattr(llm, 'model') else 'unknown',
+                    chat_id=chat_id,
+                    error_code="OLLAMA_API_ERROR"
+                )
                 yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
 
         # Return streaming response
@@ -142,6 +172,13 @@ async def analyze(request: Request):
         )
 
     except Exception as e:
+        # 🆕 记录错误日志到管理后台
+        log_async(
+            "ERROR", 
+            f"分析接口异常: {str(e)}",
+            chat_id=data.get("chat_id", "unknown") if 'data' in locals() else "unknown",
+            error_code="ANALYZE_API_ERROR"
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
