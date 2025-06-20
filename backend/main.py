@@ -35,6 +35,7 @@ deepseek_model = OllamaLLM(model="deepseek-r1:7b")
 # Initialize memory manager
 user_memory_manager = UserMemoryManager()
 
+
 # 日志工具函数
 async def log_to_management(level: str, message: str, **kwargs):
     """异步发送日志到管理后台，不阻塞主流程"""
@@ -63,8 +64,10 @@ def generate_qwen_prompt(query: str, memory):
     # 构造文本内容
     prompt_text = get_agriculture_prompt_with_image(query, history)
 
+
     # 返回标准 message 列表（用于模型调用）
     return prompt_text
+
 
 
 def generate_deepseek_prompt(query: str, memory) -> list[BaseMessage]:
