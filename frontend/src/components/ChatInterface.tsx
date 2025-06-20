@@ -14,6 +14,7 @@ import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
 import voiceGif from '../assets/voice-bg.gif';
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
+import { logError } from "@/lib/logService";
 
 interface ChatInterfaceProps {
   defaultModel: string;
@@ -80,12 +81,17 @@ export const ChatInterface = ({
       const promptVersion = await getPromptVersion(modelToUse);
       
       // 保存用户消息到管理后台
-    const startTime = Date.now();
+      const startTime = Date.now();
       const savedUserMessage = await saveUserMessage(input, modelToUse, promptVersion);
-    const userMessageId = savedUserMessage?.message_id;
+      const userMessageId = savedUserMessage?.message_id;
       
       if (!userMessageId) {
-        throw new Error("保存用户消息失败");
+        const error = new Error("保存用户消息失败");
+        logError("保存用户消息失败", error, {
+          model: modelToUse,
+          message_length: input.length
+        });
+        throw error;
       }
 
     abortControllerRef.current = new AbortController();
@@ -201,7 +207,7 @@ export const ChatInterface = ({
   return (
     <div className="w-screen mx-auto p-6 bg-[#1a1a1a] min-h-screen">
       <div
-        className="relative w-[683px] h-[747px] mx-auto flex flex-col"
+        className="relative w-full max-w-[683px] h-[80vh] sm:h-[747px] mx-auto flex flex-col"
         style={{
           backgroundImage: `url(${chatBg})`,
           backgroundSize: "100% 100%",
