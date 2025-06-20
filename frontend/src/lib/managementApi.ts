@@ -1,5 +1,16 @@
 // 管理后台API调用服务 - 增强版
-const MANAGEMENT_API_BASE = 'http://localhost:8000/api/v1';
+// 获取当前页面的主机名，用于API请求
+const getApiBaseUrl = (): string => {
+  // 如果是开发环境且在移动端访问
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    // 使用访问前台的主机名，但端口改为8000（后端端口）
+    return `http://${window.location.hostname}:8000/api/v1`;
+  }
+  // 默认localhost（电脑端开发）
+  return 'http://localhost:8000/api/v1';
+};
+
+const MANAGEMENT_API_BASE = getApiBaseUrl();
 
 // 用户会话接口
 interface UserSession {
