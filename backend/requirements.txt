@@ -1,5 +1,8 @@
-fastapi
+aiomysql
+asyncio
 httpx
+
+fastapi
 pydantic
 langchain
 langchain-core
