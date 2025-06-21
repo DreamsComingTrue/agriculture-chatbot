@@ -1,12 +1,10 @@
 from typing import Any, Dict, List
 
 from langchain_core.memory import BaseMemory
-from langchain_core.runnables import Runnable
 from pydantic import Field, PrivateAttr
 
 
 class WindowedSummaryMemory(BaseMemory):
-    llm: Runnable
     max_window: int = Field(default=10)
     memory_key: str = Field(default="history")
     _history: List[Dict[str, Any]] = PrivateAttr(default_factory=list)
