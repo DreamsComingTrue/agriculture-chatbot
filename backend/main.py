@@ -3,6 +3,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import Optional
 import asyncio
+from contextlib import asynccontextmanager
+from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -45,6 +47,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Initialize memory manager
 user_memory_manager = UserMemoryManager()
 
+
 # 日志工具函数
 async def log_to_management(level: str, message: str, **kwargs):
     """异步发送日志到管理后台，不阻塞主流程"""
@@ -72,6 +75,7 @@ def generate_qwen_prompt(query: str, memory):
 
     # 构造文本内容
     prompt_text = get_agriculture_prompt_with_image(query, history)
+
 
     # 返回标准 message 列表（用于模型调用）
     return prompt_text

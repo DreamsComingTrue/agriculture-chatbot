@@ -16,6 +16,7 @@ import voiceGif from '../assets/voice-bg.gif';
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
 
+
 interface ChatInterfaceProps {
   defaultModel: string;
   multimodalModel: string;
@@ -36,6 +37,7 @@ export const ChatInterface = ({
   const { t } = useTranslation();
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const savedMessagesRef = useRef<Set<string>>(new Set());
+
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -100,7 +102,7 @@ export const ChatInterface = ({
           {
             query: input,                    // ✅ 发送原始用户输入
             images: userMessage.images,      // ✅ 发送图片
-          chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
+            chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
             model: modelToUse,
           },
         (data) => {
