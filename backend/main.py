@@ -1,21 +1,34 @@
 import json
 import os
 import asyncio
+from contextlib import asynccontextmanager
+from typing import Optional
 
-import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from langchain_ollama import OllamaLLM
+from utils.mcp.query_router import generate_sql
+from utils.mcp.schema import get_all_schemas, init_db_pools, mysql_pools
+from utils.mcp.sql_agent import execute_sql
+from utils.memory import WindowedSummaryMemory
+from utils.models import generate_with_ollama_stream
+from utils.promptsArchive import (get_agriculture_prompt_with_image,
+                                  get_agriculture_prompt_without_image)
+from utils.user_memory import UserMemoryManager
 
-from promptsArchive import (get_agriculture_prompt_with_image,
-                            get_agriculture_prompt_without_image)
-from user_memory import UserMemoryManager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # init db pools
+    await init_db_pools()
+    yield
+    # clear all mysql connection after finished
+    mysql_pools.clear()
+
 
 # Initialize FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # Configure CORS
 app.add_middleware(
@@ -27,10 +40,6 @@ app.add_middleware(
 
 # Force GPU usage
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-# Initialize models
-qwen_model = OllamaLLM(model="qwen2.5vl:7b")
-deepseek_model = OllamaLLM(model="deepseek-r1:7b")  
 
 # Initialize memory manager
 user_memory_manager = UserMemoryManager()
@@ -69,11 +78,17 @@ def generate_qwen_prompt(query: str, memory):
     return prompt_text
 
 
-
-def generate_deepseek_prompt(query: str, memory) -> list[BaseMessage]:
+def generate_deepseek_prompt(
+    query: str,
+    memory: WindowedSummaryMemory,
+    generated_sql: Optional[str] = "",
+    sql_result: Optional[str] = "",
+) -> str:
     history = memory.load_memory_variables({}).get("history", "")
-    prompt = get_agriculture_prompt_without_image(history)
-    return [SystemMessage(prompt), HumanMessage(query)]
+    prompt = get_agriculture_prompt_without_image(
+        history, query, generated_sql, sql_result
+    )
+    return prompt
 
 
 @app.post("/analyze")
@@ -81,12 +96,15 @@ async def analyze(request: Request):
     try:
         data = await request.json()
         query = data.get("query", "")
+        enable_mcp = data.get("enable_mcp", False)
+        db = data.get("db", "ct_nmg_farm")
         images = data.get("images", [])
         chat_id = data.get("chat_id", "default")
 
         # Select model based on input
         # Keep the qwen instance temporarily
-        llm = qwen_model if images else deepseek_model
+        # llm = qwen_model if images else deepseek_model
+        llm = "qwen3:32b"
         memory = user_memory_manager.get_memory(chat_id, llm)
 
         prompt = ""
@@ -94,50 +112,38 @@ async def analyze(request: Request):
         if images:
             prompt = generate_qwen_prompt(query, memory)
         else:
-            prompt = generate_deepseek_prompt(query, memory)
+            sql_result = ""
+            if enable_mcp:
+                print("enable mcp-----------------")
+                schemas = await get_all_schemas(db)
+                sql = await generate_sql(query, schemas)
 
-        # print(f"{prompt}------------------------------")
+                if sql:
+                    sql_result = await execute_sql(db, sql)
+                print("sql_result-------------------", sql_result)
+            prompt = generate_deepseek_prompt(
+                query=query,
+                memory=memory,
+                sql_result=sql_result,
+            )
 
         # Async generator function
         async def generate_stream():
             # print("into generate stream------------------------------")
             full_response = ""
             try:
-                if images:
-                    # print("qwen---------------------------------------")
-                    # Call Ollama's streaming endpoint directly for Qwen
-                    async with httpx.AsyncClient() as client:
-                        async with client.stream(
-                            "POST",
-                            "http://127.0.0.1:11434/api/generate",
-                            json={
-                                "model": "qwen2.5vl:7b",
-                                "prompt": prompt,
-                                "images": images,
-                                "stream": True,
-                            },
-                            timeout=None,
-                        ) as response:
-                            async for line in response.aiter_lines():
-                                content = json.loads(line)
-                                token = content.get("response", "")
-                                full_response += token
-                                # print(token, "--------------------------")
-                                yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
-                else:
-                    # Use LangChain astream for DeepSeek
-                    chain = llm.with_config(configurable={"session_id": chat_id})
-                    async for chunk in chain.astream(
-                        prompt,
-                        config={"configurable": {"session_id": chat_id}},
-                    ):
-                        token = (
-                            str(chunk.get("response"))
-                            if isinstance(chunk, dict) and "response" in chunk
-                            else str(chunk)
-                        )
-                        full_response += token
-                        yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
+                async for chunk in generate_with_ollama_stream(
+                    model="qwen2.5vl:7b" if images else "qwen3:32b",
+                    prompt=prompt,
+                    image=images,
+                ):
+                    token = (
+                        str(chunk.get("response"))
+                        if isinstance(chunk, dict) and "response" in chunk
+                        else str(chunk)
+                    )
+                    full_response += token
+                    yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
 
                 memory.save_context({"input": query}, {"response": full_response})
                 yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
