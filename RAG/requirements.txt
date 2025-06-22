@@ -1,0 +1,9 @@
+fastapi
+uuid
+uvicorn
+qdrant-client
+sentence-transformers
+transformers
+torch
+torchvision
+PIL
