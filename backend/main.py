@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+
 from utils.mcp.query_router import generate_sql
 from utils.mcp.schema import get_all_schemas, init_db_pools, mysql_pools
 from utils.mcp.sql_agent import execute_sql
@@ -80,7 +81,7 @@ async def analyze(request: Request):
         # Select model based on input
         # Keep the qwen instance temporarily
         # llm = qwen_model if images else deepseek_model
-        llm = "qwen3:32b"
+        llm = "deepseek-r1:8b"
         memory = user_memory_manager.get_memory(chat_id, llm)
 
         prompt = ""
@@ -102,6 +103,7 @@ async def analyze(request: Request):
                 memory=memory,
                 sql_result=sql_result,
             )
+        print("prompt------------------", prompt)
 
         # Async generator function
         async def generate_stream():
@@ -109,7 +111,7 @@ async def analyze(request: Request):
             full_response = ""
             try:
                 async for chunk in generate_with_ollama_stream(
-                    model="qwen2.5vl:7b" if images else "qwen3:32b",
+                    model="qwen2.5vl:7b" if images else "deepseek-r1:8b",
                     prompt=prompt,
                     image=images,
                 ):
@@ -118,6 +120,7 @@ async def analyze(request: Request):
                         if isinstance(chunk, dict) and "response" in chunk
                         else str(chunk)
                     )
+                    print("token-------------", token)
                     full_response += token
                     yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
 

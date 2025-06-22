@@ -34,16 +34,17 @@ async def generate_with_ollama(
 
 
 async def generate_with_ollama_stream(
-    prompt, model="qwen3:32b", image=[], host="127.0.0.1", port=11434
+    prompt, model="deepseek-r1:8b", image=[], host="127.0.0.1", port=11434
 ):
     url = f"http://{host}:{port}/api/generate"
-    payload = {"model": model, "query": prompt, "image": image, "stream": True}
+    payload = {"model": model, "prompt": prompt, "image": image, "stream": True}
 
     async with httpx.AsyncClient(timeout=None) as client:
         async with client.stream("POST", url, json=payload) as response:
             response.raise_for_status()
             async for line in response.aiter_lines():
                 line = line.strip()
+                print("line--------------", line)
                 if line:
                     yield json.loads(line)
 

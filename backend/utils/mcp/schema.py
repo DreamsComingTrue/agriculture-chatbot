@@ -2,16 +2,7 @@ from typing import Dict
 
 import aiomysql
 
-DB_URL_LIST = [
-    {
-        "host": "localhost",
-        "port": 3306,
-        "user": "adam",
-        "password": "malin258",
-        "db": "ct_nmg_farm",
-    },
-    # Add more DB config dictionaries here
-]
+from env import DB_URL_LIST
 
 # Maintain connection pool for each DB
 mysql_pools: Dict[str, aiomysql.Pool] = {}
@@ -20,6 +11,7 @@ mysql_pools: Dict[str, aiomysql.Pool] = {}
 async def init_db_pools():
     global mysql_pools
     for config in DB_URL_LIST:
+        print("DB_URL_LIST--------", config)
         pool = await aiomysql.create_pool(
             host=config["host"],
             port=config["port"],
