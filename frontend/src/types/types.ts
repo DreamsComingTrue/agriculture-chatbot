@@ -7,10 +7,10 @@ export type Message = {
 
 // 在types文件中更新OllamaRequest类型
 export interface OllamaRequest {
-  query: string;        // 改为query
+  prompt: string;
   chat_id: string;      // 添加chat_id
   images?: string[];
-  model: string;
+  targetDB?: string;    // the target db
 }
 
 export type OllamaResponse =
