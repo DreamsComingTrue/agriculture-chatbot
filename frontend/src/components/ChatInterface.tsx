@@ -93,7 +93,6 @@ export const ChatInterface = ({
           model: modelToUse,
           message_length: input.length
         });
-        throw error;
       }
 
     abortControllerRef.current = new AbortController();
