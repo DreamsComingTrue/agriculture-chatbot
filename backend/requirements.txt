@@ -8,5 +8,6 @@ langchain
 langchain-core
 langchain-ollama
 typing
+dotenv 
 
 uvicorn # ASGI server for production

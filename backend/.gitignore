@@ -35,3 +35,5 @@ htmlcov/
 .env.local
 .env.development
 .env.production
+.env.dev
+.env.prod
