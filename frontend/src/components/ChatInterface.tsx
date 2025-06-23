@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { Message } from "@/types/types";
 import { generateResponse } from "@/lib/ollamaService";
 import { ImageUploader } from "./ImageUploader";
@@ -15,6 +15,15 @@ import robotPng from "../assets/robot.png";
 import voiceGif from '../assets/voice-bg.gif';
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 interface ChatInterfaceProps {
@@ -23,7 +32,7 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface = ({
-  defaultModel = "deepseek-r1:7b",
+  defaultModel = "deepseek-r1:8b",
   multimodalModel = "qwen:2.5vl:7b"
 }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,7 +46,12 @@ export const ChatInterface = ({
   const { t } = useTranslation();
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const savedMessagesRef = useRef<Set<string>>(new Set());
+  const [targetDB, setTargetDB] = useState("");
 
+  const db_list = useMemo(() => {
+    const db_list_str = import.meta.env.VITE_DB_LIST;
+    return JSON.parse(db_list_str);
+  }, [])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -77,16 +91,16 @@ export const ChatInterface = ({
 
     // Determine which model to use
     const modelToUse = userMessage.images ? multimodalModel : defaultModel;
-    
+
     try {
       // 获取prompt版本
       const promptVersion = await getPromptVersion(modelToUse);
-      
+
       // 保存用户消息到管理后台
       const startTime = Date.now();
       const savedUserMessage = await saveUserMessage(input, modelToUse, promptVersion);
       const userMessageId = savedUserMessage?.message_id;
-      
+
       if (!userMessageId) {
         const error = new Error("保存用户消息失败");
         logError("保存用户消息失败", error, {
@@ -95,15 +109,15 @@ export const ChatInterface = ({
         });
       }
 
-    abortControllerRef.current = new AbortController();
+      abortControllerRef.current = new AbortController();
 
       await generateResponse(
-          {
-            query: input,                    // ✅ 发送原始用户输入
-            images: userMessage.images,      // ✅ 发送图片
-            chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
-            model: modelToUse,
-          },
+        {
+          prompt: input,                    // ✅ 发送原始用户输入
+          images: userMessage.images,      // ✅ 发送图片
+          chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
+          targetDB: targetDB
+        },
         (data) => {
           if (data.type == 'delta') {
             setMessages(prev => {
@@ -119,6 +133,7 @@ export const ChatInterface = ({
           // Check if response is complete and we have images
           if (data.type == "done" && userMessage.images) {
             setShouldResetImages(true);
+            setTargetDB("");
           }
         },
         error => {
@@ -143,7 +158,7 @@ export const ChatInterface = ({
           ...updated[lastIdx],
           isComplete: true
         };
-        
+
         // 保存AI回答到管理后台
         if (userMessageId && !savedMessagesRef.current.has(userMessageId)) {
           savedMessagesRef.current.add(userMessageId);
@@ -151,12 +166,12 @@ export const ChatInterface = ({
           const responseTime = (endTime - startTime) / 1000;
           const aiResponse = updated[lastIdx]?.text || '';
           const estimatedTokens = estimateTokens(aiResponse);
-          
+
           // 异步保存AI回答
           saveAIResponse(
-            userMessageId, 
-            aiResponse, 
-            modelToUse, 
+            userMessageId,
+            aiResponse,
+            modelToUse,
             responseTime,
             estimatedTokens,
             promptVersion
@@ -246,11 +261,10 @@ export const ChatInterface = ({
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`mb-6 ${
-                msg.sender === "user"
-                  ? "flex justify-end"
-                  : "flex justify-start"
-              }`}
+              className={`mb-6 ${msg.sender === "user"
+                ? "flex justify-end"
+                : "flex justify-start"
+                }`}
             >
               {msg.sender === "ai" && (
                 <img src={botAvatar} className="w-10 h-10 mr-2" alt="AI" />
@@ -301,6 +315,29 @@ export const ChatInterface = ({
           />
 
           <div className="flex items-center justify-end gap-2 mt-2">
+            <Select
+              value={targetDB}
+              defaultValue={targetDB}
+              onValueChange={(val) => {
+                if (val == '/') setTargetDB("")
+                else setTargetDB(val)
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="查询数据库" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>选择一个目标数据库</SelectLabel>
+                  <SelectItem value="/">无</SelectItem>
+                  {
+                    db_list.map((db: { name: string, table_name: string }) => {
+                      return <SelectItem value={db.table_name}>{db.name}</SelectItem>
+                    })
+                  }
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <ImageUploader
               onImagesChange={imgs => {
                 setImages(imgs);
@@ -334,16 +371,15 @@ export const ChatInterface = ({
                   isLoading
                     ? stopGeneration
                     : !input.trim()
-                    ? undefined
-                    : sendMessage
+                      ? undefined
+                      : sendMessage
                 }
-                className={`px-4 h-8 font-medium cursor-pointer ${
-                  isLoading
-                    ? "text-red-500"
-                    : !input.trim()
+                className={`px-4 h-8 font-medium cursor-pointer ${isLoading
+                  ? "text-red-500"
+                  : !input.trim()
                     ? "text-gray-400 cursor-not-allowed"
                     : "text-white hover:opacity-80"
-                }`}
+                  }`}
                 style={{ lineHeight: "32px" }}
               >
                 {isLoading ? t("chat.stop") : t("chat.send")}
