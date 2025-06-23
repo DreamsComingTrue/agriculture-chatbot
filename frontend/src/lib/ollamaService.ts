@@ -9,13 +9,14 @@ export const generateResponse = async (
   try {
     // Convert images to base64 if they exist
     // 修改 payload 生成逻辑
-        const payload = {
-          query: request.query,        // ✅ 发送query而不是prompt  
-          chat_id: request.chat_id,    // ✅ 发送chat_id
-          images: request.images?.map(img => 
-              img.startsWith('data:') ? img.split(',')[1] : img
-          ) || []
-  };
+    const payload = {
+      ...request,
+      prompt: request.prompt,        // ✅ 发送query而不是prompt  
+      chat_id: request.chat_id,    // ✅ 发送chat_id
+      images: request.images?.map(img =>
+        img.startsWith('data:') ? img.split(',')[1] : img
+      ) || [],
+    };
 
     const domain = window.location.hostname;
     const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/analyze`, {
@@ -40,7 +41,7 @@ export const generateResponse = async (
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        onData({ model: request.model, type: 'done' });
+        onData({ model: "", type: 'done' });
         break;
       }
 
@@ -57,10 +58,10 @@ export const generateResponse = async (
 
           switch (parsed.type) {
             case 'delta':
-              onData({ type: 'delta', token: parsed.token, model: request.model });
+              onData({ type: 'delta', token: parsed.token, model: parsed.model });
               break;
             case 'done':
-              onData({ type: 'done', model: request.model });
+              onData({ type: 'done', model: parsed.model });
               break;
             case 'error':
               onError(new Error(parsed.message));
