@@ -82,23 +82,23 @@ def generate_qwen_prompt(query: str, memory):
 
 
 def generate_deepseek_prompt(
-    query: str,
+    prompt: str,
     memory: WindowedSummaryMemory,
     generated_sql: Optional[str] = "",
     sql_result: Optional[str] = "",
 ) -> str:
     history = memory.load_memory_variables({}).get("history", "")
-    prompt = get_agriculture_prompt_without_image(
-        history, query, generated_sql, sql_result
+    generated_prompt = get_agriculture_prompt_without_image(
+        history, prompt, generated_sql, sql_result
     )
-    return prompt
+    return generated_prompt
 
 
 @app.post("/analyze")
 async def analyze(request: Request):
     data = await request.json()
     try:
-        query = data.get("query", "")
+        user_prompt = data.get("prompt", "")
         targetDB = data.get("targetDB", "")
         images = data.get("images", [])
         chat_id = data.get("chat_id", "default")
@@ -112,19 +112,19 @@ async def analyze(request: Request):
         prompt = ""
         # Create the prompt based on model
         if images:
-            prompt = generate_qwen_prompt(query, memory)
+            prompt = generate_qwen_prompt(user_prompt, memory)
         else:
             sql_result = ""
             if targetDB:
                 print("targetDB-----------------", targetDB)
                 schemas = await get_all_schemas(targetDB)
-                sql = await generate_sql(query, schemas)
+                sql = await generate_sql(user_prompt, schemas)
 
                 if sql:
                     sql_result = await execute_sql(targetDB, sql)
                 print("sql_result-------------------", sql_result)
             prompt = generate_deepseek_prompt(
-                query=query,
+                prompt=user_prompt,
                 memory=memory,
                 sql_result=sql_result,
             )
@@ -149,7 +149,7 @@ async def analyze(request: Request):
                     full_response += token
                     yield f"data: {json.dumps({'type': 'delta', 'token': token}, ensure_ascii=False)}\n\n"
 
-                memory.save_context({"input": query}, {"response": full_response})
+                memory.save_context({"input": user_prompt}, {"response": full_response})
                 yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
 
             except Exception as e:
