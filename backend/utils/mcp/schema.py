@@ -53,4 +53,6 @@ async def fetch_schema(pool: aiomysql.Pool) -> str:
 
 async def get_all_schemas(db: str) -> Dict[str, str]:
     schema = await fetch_schema(mysql_pools[db])
-    return dict(zip(db, schema))
+    res = {}
+    res[db] = schema
+    return res
