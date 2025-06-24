@@ -13,7 +13,8 @@ def stringifySchema(schemas):
 async def generate_sql(query, schemas) -> str:
     try:
         schemasStr = stringifySchema(schemas)
-        prompt = f"""## 数据库 schema: {schemasStr} ## 用户问题: "{query}" ## 要求: 根据schema, 生成一条SQL解决用户问题, 如果无法解决, 则只返回"no". 结果只包含一条SQL语句或者"no" /no think"""
+        print("schema---------------", schemasStr)
+        prompt = f"""## 数据库 schema: {schemasStr} ## 用户问题: "{query}" ## 要求: 根据schema, 生成一条SQL解决用户问题, 如果无法解决, 则只返回"no". 结果只包含一条SQL语句或者"no" """
 
         prompt = re.sub(r"\\n", " ", prompt)
         output = await generate_with_ollama(prompt=prompt)
@@ -21,7 +22,7 @@ async def generate_sql(query, schemas) -> str:
         cleaned = clean_llm_response(output["response"])
         if cleaned == "no":
             return ""
-        cleaned = extract_sql_queries(cleaned)[0]
+        # cleaned = extract_sql_queries(cleaned)[0]
         print("cleaned-------------------------", cleaned)
         return cleaned
     except Exception as e:
