@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import type { Message } from "@/types/types";
 import { generateResponse } from "@/lib/ollamaService";
 import { ImageUploader } from "./ImageUploader";
@@ -8,8 +8,6 @@ import chatBg from "../assets/chat-bg.png";
 import botAvatar from "../assets/bot-avatar.png";
 import userAvatar from "../assets/user-avatar.png";
 import textBg from "../assets/text-bg.png";
-import voiceIcon from "../assets/voice.png";
-import voiceActiveIcon from "../assets/voice-active.png";
 import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
 import voiceGif from '../assets/voice-bg.gif';
@@ -24,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SpeechToText } from "./SpeechToText.tsx"
 
 
 interface ChatInterfaceProps {
@@ -348,13 +347,16 @@ export const ChatInterface = ({
 
             <div
               className="w-8 h-8 flex items-center justify-center cursor-pointer"
-              onClick={() => setIsVoiceActive(!isVoiceActive)}
             >
-              <img
-                src={isVoiceActive ? voiceActiveIcon : voiceIcon}
-                alt="语音"
-                className="w-full h-full"
-              />
+              <SpeechToText
+                afterTranslate={(str) => {
+                  setInput((prev) => {
+                    return prev + str
+                  })
+                }}
+                onVoiceActive={() => setIsVoiceActive(true)}
+                onVoiceInActive={() => setIsVoiceActive(false)}
+              ></SpeechToText>
             </div>
 
             <div
