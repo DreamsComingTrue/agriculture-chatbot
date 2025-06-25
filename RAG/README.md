@@ -35,7 +35,7 @@ docker run -p 6333:6333 -v $(pwd)/qdrant_data:/qdrant/storage qdrant/qdrant
 ## 🚀 启动服务
 
 ```bash
-python3 main.py
+python3 -m RAG.main
 ```
 
 打开接口文档：<http://localhost:8082/docs>
@@ -53,7 +53,7 @@ image file ✅ 上传的图像文件
 示例请求
 
 ```bash
-curl -X POST http://localhost:8000/embed \
+curl -X POST http://localhost:8082/embed \
   -F "text=这是一只在沙发上睡觉的猫" \
   -F "image=@images/cat.jpg"
 
@@ -77,7 +77,7 @@ top_k int 返回前 top_k 个结果，默认3
 示例请求
 
 ```bash
-curl "http://localhost:8000/search?query=一只正在打盹的小猫"
+curl "http://localhost:8082/search?query=一只正在打盹的小猫"
 ```
 
 示例响应
