@@ -10,12 +10,14 @@ import CryptoJS from "crypto-js"; // 用于生成签名
 const processorPath = '../../public';
 
 interface SpeechToTextProps {
+  disabled: boolean;
   afterTranslate?: (str: string) => void;
   onVoiceActive?: () => void;
   onVoiceInActive?: () => void;
 }
 
 export const SpeechToText: React.FC<SpeechToTextProps> = ({
+  disabled = false,
   afterTranslate,
   onVoiceActive,
   onVoiceInActive,
@@ -84,6 +86,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
         wsRef.current.send(JSON.stringify(endPayload));
       }
       setIsVoiceActive(false);
+      setIsWSActive(false);
       onVoiceInActive?.();
     };
   }, [onVoiceInActive]);
@@ -151,7 +154,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   };
 
   const handleToggle = () => {
-    if (!recorderRef.current) return;
+    if (!recorderRef.current || disabled) return;
 
     if (isVoiceActive) {
       recorderRef.current.stop();
@@ -166,7 +169,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   };
 
   return (
-    <div className="w-full h-full" onClick={handleToggle}>
+    <div className={`w-full h-full ${disabled ? "cursor-not-allowed" : ""}`} onClick={handleToggle}>
       <img
         src={isVoiceActive ? (isWSActive ? voiceActiveIcon : rotating_circle) : (isWSActive ? rotating_circle : voiceIcon)}
         alt="语音"

@@ -10,7 +10,6 @@ import userAvatar from "../assets/user-avatar.png";
 import textBg from "../assets/text-bg.png";
 import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
-import voiceGif from '../assets/voice-bg.gif';
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
 import {
@@ -36,6 +35,7 @@ export const ChatInterface = ({
 }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   // Add this new state for tracking image reset
@@ -43,7 +43,6 @@ export const ChatInterface = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
 
@@ -66,6 +65,8 @@ export const ChatInterface = ({
   };
 
   const sendMessage = async () => {
+    if (!inputRef.current) return;
+    const input = inputRef.current.value;
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -290,7 +291,7 @@ export const ChatInterface = ({
         <div
           className="flex flex-col gap-2 m-4 flex-shrink-0"
           style={{
-            backgroundImage: `url(${isVoiceActive ? voiceGif : textBg})`,
+            backgroundImage: `url(${textBg})`,
             backgroundSize: "100% 100%",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -298,6 +299,7 @@ export const ChatInterface = ({
           }}
         >
           <textarea
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
@@ -308,8 +310,8 @@ export const ChatInterface = ({
             disabled={isLoading}
             rows={2}
             style={{
-              opacity: isVoiceActive ? 0 : 1,
-              pointerEvents: isVoiceActive ? "none" : "auto"
+              opacity: 1,
+              pointerEvents: "auto"
             }}
           />
 
@@ -349,13 +351,18 @@ export const ChatInterface = ({
               className="w-8 h-8 flex items-center justify-center cursor-pointer"
             >
               <SpeechToText
+                disabled={isLoading}
                 afterTranslate={(str) => {
                   setInput((prev) => {
                     return prev + str
                   })
                 }}
-                onVoiceActive={() => setIsVoiceActive(true)}
-                onVoiceInActive={() => setIsVoiceActive(false)}
+                onVoiceInActive={() => {
+                  const timeout = setTimeout(() => {
+                    sendMessage();
+                    clearTimeout(timeout);
+                  }, 500);
+                }}
               ></SpeechToText>
             </div>
 
