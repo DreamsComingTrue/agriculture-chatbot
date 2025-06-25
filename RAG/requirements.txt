@@ -6,4 +6,5 @@ sentence-transformers
 transformers
 torch
 torchvision
-PIL
+Pillow
+python-multipart
