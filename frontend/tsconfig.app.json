@@ -32,6 +32,8 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "src"
+    "src",
+    "public/processor.worker.js",
+    "public/processor.worklet.js"
   ]
 }
