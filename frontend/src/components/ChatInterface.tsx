@@ -211,6 +211,17 @@ export const ChatInterface = ({
       abortControllerRef.current.abort();
       setIsLoading(false);
     }
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.sender === "ai" && lastMsg.text === "") {
+      setMessages(prev => [
+        ...prev.slice(0, -1), // 移除未完成的AI消息
+        {
+          text: `请求已中断, 欢迎再次向我提问.`,
+          sender: "ai",
+          isComplete: true
+        }
+      ]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -219,6 +230,21 @@ export const ChatInterface = ({
       sendMessage();
     }
   };
+
+  const [loadingWords, setLoadingWords] = useState("");
+  useEffect(() => {
+    let i = 0;
+    setInterval(() => {
+      i++;
+      if (i > 200000) i = 0; // 防止 int 越界
+      const loadingWordList = [
+        "小羲正在全力思考, 请您耐心等待.",
+        "小羲正在全力思考, 请您耐心等待. .",
+        "小羲正在全力思考, 请您耐心等待. . .",
+      ];
+      setLoadingWords(loadingWordList[i % 3]);
+    }, 500);
+  }, [])
 
   return (
     <div className="w-screen mx-auto p-6 bg-[#1a1a1a] min-h-screen">
@@ -278,7 +304,7 @@ export const ChatInterface = ({
                   color: "#D7ECFF"
                 }}
               >
-                <MarkdownRenderer content={msg.text} className="text-left" />
+                <MarkdownRenderer content={msg.text ? msg.text : loadingWords} className="text-left" />
               </div>
               {msg.sender !== "ai" && (
                 <img src={userAvatar} className="w-10 h-10 ml-2" alt="AI" />
