@@ -33,7 +33,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 <div className="absolute right-2 top-1 text-xs text-gray-500">
                   {match?.[1] || 'code'}
                 </div>
-                <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto mt-6">
+                <pre className="bg-gray-400 p-4 rounded-md overflow-x-auto mt-6">
                   <code
                     className={`hljs ${className}`}
                     {...props}
@@ -43,7 +43,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 </pre>
               </div>
             ) : (
-              <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">
+              <code className="bg-gray-500 px-1.5 py-0.5 rounded text-sm font-mono">
                 {children}
               </code>
             );
@@ -59,7 +59,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           },
           th({ children }) {
             return (
-              <th className="border px-4 py-2 text-left bg-gray-50">
+              <th className="border px-4 py-2 text-left bg-gray-400">
                 {children}
               </th>
             );
