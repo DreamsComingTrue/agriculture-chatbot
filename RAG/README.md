@@ -18,12 +18,9 @@
 
 ## 🔧 安装依赖
 
-### 1. 克隆项目 & 安装依赖
+### 1. 安装依赖
 
 ```bash
-git clone https://github.com/yourname/multimodal-qdrant.git
-cd multimodal-qdrant
-
 pip install -r requirements.txt
 
 ### 2. 启动 Qdrant 数据库（使用 Docker）
@@ -31,10 +28,11 @@ pip install -r requirements.txt
 ```bash
 docker run -p 6333:6333 -v $(pwd)/qdrant_data:/qdrant/storage qdrant/qdrant
 ```
-
+服务器中已安装依赖，已启动 Qdrant 数据库，从启动服务开始
 ## 🚀 启动服务
 
 ```bash
+cd agriculture-chatbot
 python3 -m RAG.main
 ```
 
@@ -54,18 +52,15 @@ image file ✅ 上传的图像文件
 
 ```bash
 curl -X POST http://localhost:8082/embed \
-  -F "text=这是一只在沙发上睡觉的猫" \
-  -F "image=@images/cat.jpg"
+  -F "text=这是苍耳" \
+  -F "image=@images/苍耳.jpg"
 
 ```
 
 响应结果
 
 ```bash
-{
-  "status": "success",
-  "image_path": "./uploaded_images/abc123_cat.jpg"
-}
+{"status":"success","image_path":"./uploaded_images/da61afac65ed4f108594bfa6240539cd_苍耳.jpg"}
 ```
 
 查询参数
@@ -77,18 +72,13 @@ top_k int 返回前 top_k 个结果，默认3
 示例请求
 
 ```bash
-curl "http://localhost:8082/search?query=一只正在打盹的小猫"
+curl -G --data-urlencode "query=苍耳" http://localhost:8082/search
 ```
 
 示例响应
 
 ```bash
-[
-  {
-    "text": "这是一只在沙发上睡觉的猫",
-    "image_path": "./uploaded_images/abc123_cat.jpg"
-  }
-]
+[{"text":"这是苍耳","image_path":"./uploaded_images/da61afac65ed4f108594bfa6240539cd_苍耳.jpg"}]
 ```
 
 ## 📘 注意事项
