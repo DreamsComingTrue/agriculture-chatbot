@@ -11,7 +11,7 @@ while True:
         break
 
     try:
-        response = requests.get(API_URL, params={"query": query, "top_k": 2})
+        response = requests.get(API_URL, params={"query": query, "top_k": 3})
         response.raise_for_status()
         results = response.json()
 
