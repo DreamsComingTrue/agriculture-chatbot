@@ -4,11 +4,12 @@ from uuid import uuid4
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 
-from .pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
+from pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
                        Qwen3Embedder, client)
 
 app = FastAPI()
 text_embedder = Qwen3Embedder()
+
 image_embedder = CLIPEmbedder()
 
 UPLOAD_DIR = "./uploaded_images"
@@ -43,6 +44,7 @@ async def search_by_text(query: str, top_k: int = 3):
         collection_name=COLLECTION_NAME,
         query_vector=("text", query_vector),
         limit=top_k,
+        with_payload=True
     )
     return [r.payload for r in results]
 
