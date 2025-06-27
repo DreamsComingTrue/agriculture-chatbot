@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 images/
 uploaded_images/
+test_json.py
 *.key
 *.pem
 *.env
