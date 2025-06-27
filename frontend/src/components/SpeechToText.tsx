@@ -7,8 +7,6 @@ import type { RecorderManager } from "@/index";
 
 import CryptoJS from "crypto-js"; // 用于生成签名
 
-const processorPath = '../../public';
-
 interface SpeechToTextProps {
   disabled: boolean;
   afterTranslate?: (str: string) => void;
@@ -49,7 +47,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
 
   useEffect(() => {
     // @ts-expect-error recorder manager is a global class
-    const recorder = new RecorderManager(processorPath);
+    const recorder = new RecorderManager(__PROCESSOR_PATH__);
     recorderRef.current = recorder;
 
     recorder.onFrameRecorded = ({ frameBuffer }: any) => {
