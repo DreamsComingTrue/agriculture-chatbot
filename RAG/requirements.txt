@@ -6,4 +6,4 @@ sentence-transformers
 transformers
 torch
 torchvision
-PIL
+Pillow
