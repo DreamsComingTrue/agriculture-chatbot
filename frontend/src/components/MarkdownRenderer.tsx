@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks'
+import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
 import type { PluggableList } from 'unified';
@@ -14,10 +16,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = ''
 }) => {
-  const remarkPlugins: PluggableList = [remarkGfm];
+  const remarkPlugins: PluggableList = [remarkGfm, remarkBreaks];
   const rehypePlugins: PluggableList = [
-    [rehypeHighlight, { ignoreMissing: true }]
-  ];
+    rehypeRaw,
+    [rehypeHighlight, { ignoreMissing: true }] ];
+
+    const formattedContent = content
+    .replace(/<think>/g, '&lt;think&gt;')
+    .replace(/<\/think>/g, '&lt;/think&gt;')
+    .replace(/~/g, '\-')
 
   return (
     <div className={`markdown-body ${className}`}>
@@ -48,6 +55,32 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               </code>
             );
           },
+          h2: ({ children, className }) => (
+            <h2 className={className} style={{ margin: '1em 0' }}>
+              {children}
+            </h2>
+          ),
+
+          // custom H3
+          h3: ({ children, className }) => (
+            <h3 className={className} style={{ margin: '0.75em 0' }}>
+              {children}
+            </h3>
+          ),
+
+          // custom paragraph
+          p: ({ children, className }) => (
+            <p className={className} style={{ margin: '0.5em 0' }}>
+              {children}
+            </p>
+          ),
+
+          // custom unordered list
+          ul: ({ children, className }) => (
+            <ul className={className} style={{ margin: '0.5em 0 1em 1.5em' }}>
+              {children}
+            </ul>
+          ),
           table({ children }) {
             return (
               <div className="overflow-x-auto">
@@ -86,7 +119,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // Add more custom components as needed
         }}
       >
-        {content}
+        {formattedContent}
       </ReactMarkdown>
     </div>
   );
