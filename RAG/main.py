@@ -5,10 +5,9 @@ import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 
 from pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
-                       Qwen3Embedder,BgeEmbedder, client)
+                    BgeEmbedder, client)
 
 app = FastAPI()
-# text_embedder = Qwen3Embedder()
 text_embedder = BgeEmbedder()
 
 image_embedder = CLIPEmbedder()

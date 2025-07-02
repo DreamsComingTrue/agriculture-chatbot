@@ -2,7 +2,7 @@ import json
 import uuid
 from tqdm import tqdm
 
-from pipeline import Qwen3Embedder,BgeEmbedder, client, COLLECTION_NAME, PointStruct
+from pipeline import BgeEmbedder, client, COLLECTION_NAME, PointStruct
 
 def load_structured_json(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -20,7 +20,6 @@ def load_structured_json(filepath):
 def main():
     filepath = "structured_data.json"
 
-    # embedder = Qwen3Embedder()
     embedder = BgeEmbedder()
 
     docs = load_structured_json(filepath)
