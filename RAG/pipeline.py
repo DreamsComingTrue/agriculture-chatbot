@@ -4,17 +4,23 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import (CollectionStatus, Distance, PointStruct,
                                   VectorParams)
 from transformers import CLIPModel, CLIPProcessor
+from transformers import AutoModel, AutoTokenizer
 from qdrant_client.models import CollectionInfo
-from sentence_transformers import SentenceTransformer
 
-# ========== BGE Text Embedding ==========
-class BgeEmbedder:
-    def __init__(self, model_name="BAAI/bge-large-zh-v1.5"):
 
-        self.model = SentenceTransformer(model_name)
+# ========== QWEN3 Text Embedding ==========
+class Qwen3Embedder:
+    def __init__(self, model_id="Qwen/Qwen3-Embedding-0.6B"):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+        self.model = AutoModel.from_pretrained(model_id, trust_remote_code=True).eval()
 
     def embed(self, text: str):
-        return self.model.encode(text, normalize_embeddings=True).tolist()
+        inputs = self.tokenizer(
+            text, return_tensors="pt", truncation=True, max_length=512
+        )
+        with torch.no_grad():
+            output = self.model(**inputs)
+            return output.last_hidden_state.mean(dim=1).squeeze().tolist()
 
 
 # ========== CLIP Image Embedding ==========
