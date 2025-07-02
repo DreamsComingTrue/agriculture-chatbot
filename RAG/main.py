@@ -4,11 +4,11 @@ from uuid import uuid4
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 
-from .pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
-                       Qwen3Embedder, client)
+from .pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct, BgeEmbedder,
+                       client)
 
 app = FastAPI()
-text_embedder = Qwen3Embedder()
+text_embedder = BgeEmbedder()
 image_embedder = CLIPEmbedder()
 
 UPLOAD_DIR = "./uploaded_images"
