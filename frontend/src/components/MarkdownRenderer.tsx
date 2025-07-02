@@ -7,6 +7,7 @@ import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
 import type { PluggableList } from 'unified';
 
+
 interface MarkdownRendererProps {
   content: string;
   className?: string;
@@ -35,12 +36,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // @ts-expect-error known issue
           code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return inline ? (
+            return !inline ? (
               <div className="relative">
                 <div className="absolute right-2 top-1 text-xs text-gray-500">
                   {match?.[1] || 'code'}
                 </div>
-                <pre className="bg-gray-400 p-4 rounded-md overflow-x-auto mt-6">
+                <pre className="w-full overflow-x-auto whitespace-pre rounded-md bg-gray-100 p-4 text-sm">
                   <code
                     className={`hljs ${className}`}
                     {...props}
