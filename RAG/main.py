@@ -121,6 +121,20 @@ async def unified_multimodal_search(
                 return JSONResponse(status_code=400, content={"base64图像解析失败": str(e)})
             
 
+                for item in image_results:
+                    payload = item.payload
+                    if "text" in payload:
+                        follow_up_query = payload["text"] + "的防治方法"
+                        text_vector = text_embedder.embed(follow_up_query)
+                        text_results = client.search(
+                            collection_name=COLLECTION_NAME,
+                            query_vector=("text", text_vector),
+                            limit=3,
+                            with_payload=True
+                        )
+                        results.extend(text_results)
+            
+
         if not results:
             return JSONResponse(status_code=400, content={"必须至少提供 text 或 image_base64 参数"})
 
