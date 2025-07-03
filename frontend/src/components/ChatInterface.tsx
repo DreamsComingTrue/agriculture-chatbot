@@ -231,7 +231,8 @@ export const ChatInterface = ({
     }
   };
 
-  const [loadingWords, setLoadingWords] = useState("");
+ 
+  let loadingWords= "";
   useEffect(() => {
     let i = 0;
     setInterval(() => {
@@ -242,7 +243,7 @@ export const ChatInterface = ({
         "小羲正在全力思考, 请您耐心等待. .",
         "小羲正在全力思考, 请您耐心等待. . .",
       ];
-      setLoadingWords(loadingWordList[i % 3]);
+       loadingWords = loadingWordList[i % 3];
     }, 500);
   }, [])
 
@@ -296,6 +297,7 @@ export const ChatInterface = ({
                 <img src={botAvatar} className="w-10 h-10 mr-2" alt="AI" />
               )}
               <div
+                key={i}
                 style={{
                   background: "rgba(17, 96, 73, 0.40)",
                   borderRadius: "4px",
@@ -304,7 +306,7 @@ export const ChatInterface = ({
                   color: "#D7ECFF"
                 }}
               >
-                <MarkdownRenderer content={msg.text ? msg.text : loadingWords} className="text-left" />
+                <MarkdownRenderer key={i} content={msg.text ? msg.text : loadingWords} className="text-left" />
               </div>
               {msg.sender !== "ai" && (
                 <img src={userAvatar} className="w-10 h-10 ml-2" alt="AI" />
