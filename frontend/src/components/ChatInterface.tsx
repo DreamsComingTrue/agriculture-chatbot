@@ -125,7 +125,7 @@ export const ChatInterface = ({
               const lastIdx = updated.length - 1;
               updated[lastIdx] = {
                 ...updated[lastIdx],
-                text: (updated[lastIdx].text || "") + data.token
+                text: (updated[lastIdx].text + data.token),
               };
               return updated;
             });
@@ -231,8 +231,7 @@ export const ChatInterface = ({
     }
   };
 
- 
-  let loadingWords= "";
+  let loadingWords = "";
   useEffect(() => {
     let i = 0;
     setInterval(() => {
@@ -243,7 +242,7 @@ export const ChatInterface = ({
         "小羲正在全力思考, 请您耐心等待. .",
         "小羲正在全力思考, 请您耐心等待. . .",
       ];
-       loadingWords = loadingWordList[i % 3];
+      loadingWords = loadingWordList[i % 3];
     }, 500);
   }, [])
 

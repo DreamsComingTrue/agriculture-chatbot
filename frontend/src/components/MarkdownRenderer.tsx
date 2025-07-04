@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks'
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css'; // Or choose another style
+import { remarkMCPTools } from './RemarkMCPTools';
+import { MCPCard } from './MCPCard';
 import type { PluggableList } from 'unified';
 
 
@@ -17,22 +18,30 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = ''
 }) => {
-  const remarkPlugins: PluggableList = [remarkGfm, remarkBreaks];
+  const remarkPlugins: PluggableList = [remarkGfm, remarkMCPTools];
   const rehypePlugins: PluggableList = [
     rehypeRaw,
-    [rehypeHighlight, { ignoreMissing: true }] ];
+    // rehypeCustomComponents,
+    [rehypeHighlight, { ignoreMissing: true }],
+  ];
 
-    const formattedContent = content
+  const formattedContent = content
     .replace(/<think>/g, '&lt;think&gt;')
     .replace(/<\/think>/g, '&lt;/think&gt;')
-    .replace(/~/g, '\-')
+    .replace(/~/g, '-')
 
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
+        // children={`Here is a tool:\n\n<mcp-card toolCall='{"tool":"list_schemas","args":{},"output":[1,2,3]}'></mcp-card>`}
+        skipHtml={false}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
         components={{
+          // @ts-expect-error any and node types
+          'mcp-card': ({ node }) => {
+            return <MCPCard toolCall={node.properties.toolcall} />;
+          },
           // @ts-expect-error known issue
           code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
