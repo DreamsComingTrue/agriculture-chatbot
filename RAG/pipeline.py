@@ -32,6 +32,12 @@ class CLIPEmbedder:
         with torch.no_grad():
             outputs = self.model.get_image_features(**inputs)
         return outputs.squeeze().tolist()
+    
+    def embed_from_pil(self, image: Image.Image):
+        inputs = self.processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            outputs = self.model.get_image_features(**inputs)
+        return outputs.squeeze().tolist()
 
 
 # ========== Qdrant Setup ==========
