@@ -3,6 +3,7 @@ asyncio
 httpx
 
 fastapi
+fastmcp
 pydantic
 langchain
 langchain-core
