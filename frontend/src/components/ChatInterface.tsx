@@ -12,15 +12,15 @@ import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectGroup,
+//   SelectLabel,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
 import { SpeechToText } from "./SpeechToText.tsx"
 
 
@@ -343,29 +343,29 @@ export const ChatInterface = ({
           />
 
           <div className="flex items-center justify-end gap-2 mt-2">
-            <Select
-              value={targetDB}
-              defaultValue={targetDB}
-              onValueChange={(val) => {
-                if (val == '/') setTargetDB("")
-                else setTargetDB(val)
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="查询数据库" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>选择一个目标数据库</SelectLabel>
-                  <SelectItem value="/">无</SelectItem>
-                  {
-                    db_list.map((db: { name: string, table_name: string }) => {
-                      return <SelectItem value={db.table_name}>{db.name}</SelectItem>
-                    })
-                  }
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            {/* <Select */}
+            {/*   value={targetDB} */}
+            {/*   defaultValue={targetDB} */}
+            {/*   onValueChange={(val) => { */}
+            {/*     if (val == '/') setTargetDB("") */}
+            {/*     else setTargetDB(val) */}
+            {/*   }} */}
+            {/* > */}
+            {/*   <SelectTrigger className="w-[180px]"> */}
+            {/*     <SelectValue placeholder="查询数据库" /> */}
+            {/*   </SelectTrigger> */}
+            {/*   <SelectContent> */}
+            {/*     <SelectGroup> */}
+            {/*       <SelectLabel>选择一个目标数据库</SelectLabel> */}
+            {/*       <SelectItem value="/">无</SelectItem> */}
+            {/*       { */}
+            {/*         db_list.map((db: { name: string, table_name: string }) => { */}
+            {/*           return <SelectItem value={db.table_name}>{db.name}</SelectItem> */}
+            {/*         }) */}
+            {/*       } */}
+            {/*     </SelectGroup> */}
+            {/*   </SelectContent> */}
+            {/* </Select> */}
             <ImageUploader
               onImagesChange={imgs => {
                 setImages(imgs);
