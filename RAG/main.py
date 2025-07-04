@@ -133,6 +133,9 @@ async def unified_multimodal_search(
                             with_payload=True
                         )
                         results.extend(text_results)
+
+            except Exception as e:
+                return JSONResponse(status_code=400, content={"base64图像解析失败": str(e)})
             
 
         if not results:
