@@ -71,7 +71,7 @@ async def embed_data(
 @app.post("/search")
 async def unified_multimodal_search(
     text: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None),
+    image_base64: Optional[str] = Body(None),
     top_k: int = Form(3),
 ):
     try:
@@ -89,19 +89,20 @@ async def unified_multimodal_search(
             results.extend(text_results)
 
         # 图像查询
-        if image:
-            file_path = os.path.join(UPLOAD_DIR, f"{uuid4().hex}_{image.filename}")
-            with open(file_path, "wb") as f:
-                f.write(await image.read())
+        if image_base64:
+            try:
+                image_bytes = base64.b64decode(header_removed)
+                image = Image.open(BytesIO(image_bytes)).convert("RGB")
 
-            image_vector = image_embedder.embed(file_path)
-            image_results = client.search(
-                collection_name=COLLECTION_NAME,
-                query_vector=("image", image_vector),
-                limit=top_k,
-                with_payload=True
-            )
-            results.extend(image_results)
+                image_vector = image_embedder.embed_from_pil(image)
+
+                image_results = client.search(
+                    collection_name=COLLECTION_NAME,
+                    query_vector=("image", image_vector),
+                    limit=top_k,
+                    with_payload=True
+                )
+                results.extend(image_results)
 
                 for item in image_results:
                     payload = item.payload
@@ -115,10 +116,13 @@ async def unified_multimodal_search(
                             with_payload=True
                         )
                         results.extend(text_results)
+
+            except Exception as e:
+                return JSONResponse(status_code=400, content={"base64图像解析失败": str(e)})
             
 
         if not results:
-            return JSONResponse(status_code=400, content={"必须至少提供 text 或 image 参数"})
+            return JSONResponse(status_code=400, content={"必须至少提供 text 或 image_base64 参数"})
 
         # 根据["text"]或["page_content"]合并相同内容
         seen = set()
