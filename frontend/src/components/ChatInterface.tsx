@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { Message } from "@/types/types";
 import { generateResponse } from "@/lib/ollamaService";
 import { ImageUploader } from "./ImageUploader";
@@ -46,10 +46,10 @@ export const ChatInterface = ({
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
 
-  const db_list = useMemo(() => {
-    const db_list_str = import.meta.env.VITE_DB_LIST;
-    return JSON.parse(db_list_str);
-  }, [])
+  // const db_list = useMemo(() => {
+  //   const db_list_str = import.meta.env.VITE_DB_LIST;
+  //   return JSON.parse(db_list_str);
+  // }, [])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
