@@ -17,15 +17,25 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
         llm_reply = clean_message(llm_reply["response"])
         print("tool plan----------------------", llm_reply)
 
-        if END_KEYWORD in llm_reply or times == 8:
+        if END_KEYWORD in llm_reply or times == 10:
             yield generate_sse_data(
                 "尝试结束, 小羲正在汇总全部信息为您解答, 请稍后...\n\n"
             )
             summary_prompt = get_summary_prompt(user_query, context)
+            final_token = ""
             async for chunk in generate_with_ollama_stream(
                 prompt=summary_prompt, model="qwen3:32b"
             ):
-                yield generate_sse_data(chunk)
+                token = (
+                    str(chunk.get("response"))
+                    if isinstance(chunk, dict) and "response" in chunk
+                    else str(chunk)
+                )
+                print("token-------------", token)
+                final_token += token
+                yield generate_sse_data(token)
+
+            context_list.append(f"summary: {final_token}\n")
             break
 
         try:
