@@ -19,14 +19,20 @@ export const MCPCard: React.FC<{ toolCall: string }> = ({ toolCall }) => {
         <div className="text-sm mt-2">
           <div className="font-semibold text-gray-300">参数:</div>
           <pre className="bg-gray-800 text-gray-100 p-2 rounded overflow-x-auto text-xs">
-            {JSON.stringify(toolCallObj?.args, null, 2)}
+            <code className="language-json">
+              {JSON.stringify(toolCallObj?.args, null, 2)}
+            </code>
           </pre>
         </div>
         {toolCallObj?.output && (
           <div className="text-sm mt-2">
             <div className="font-semibold text-gray-300">输出:</div>
             <pre className="bg-gray-800 text-gray-100 p-2 rounded overflow-x-auto text-xs">
-              {JSON.stringify(toolCallObj.output, null, 2)}
+              <code className="language-sql">
+                {typeof toolCallObj.output === 'string'
+                  ? toolCallObj.output
+                  : JSON.stringify(toolCallObj.output, null, 2)}
+              </code>
             </pre>
           </div>
         )}
