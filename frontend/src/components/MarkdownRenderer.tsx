@@ -28,22 +28,22 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     [rehypeHighlight, { ignoreMissing: true }],
   ];
 
-  // const formattedContent = content
-  //   .replace(/<think>/g, '&lt;think&gt;')
-  //   .replace(/<\/think>/g, '&lt;/think&gt;')
-  //   .replace(/~/g, '-')
+  const formattedContent = content
+    .replace(/<think>/g, '&lt;think&gt;')
+    .replace(/<\/think>/g, '&lt;/think&gt;')
+    .replace(/~/g, '-')
+
+  //   const formattedContent = `
+  // This is some inline code: \`123\` inside a paragraph.
   //
-  const formattedContent = `
-This is some inline code: \`123\` inside a paragraph.
-
-Here is a code block:
-
-\`\`\`sql
-SELECT * FROM users WHERE id = 1;
-\`\`\`
-
-正在使用MCP tool: list_schema, 参数: {{"ttt": hahaha}} TOOL_OUTPUT: \`\`\`sql Select * from table; \`\`\`
-`;
+  // Here is a code block:
+  //
+  // \`\`\`sql
+  // SELECT * FROM users WHERE id = 1;
+  // \`\`\`
+  //
+  // 正在使用MCP tool: list_schema, 参数: {{"ttt": hahaha}} TOOL_OUTPUT: \`\`\`sql Select * from table; \`\`\`
+  // `;
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
