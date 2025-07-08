@@ -12,8 +12,6 @@
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",
     "@tailwindcss/vite": "^4.1.7",
-    "@types/crypto-js": "^4.2.2",
-    "@types/node": "^22.15.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
@@ -32,8 +30,11 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@catppuccin/highlightjs": "^1.0.1",
     "@eslint/js": "^9.25.0",
     "@types/hast": "^3.0.4",
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^22.15.21",
     "@types/mdast": "^4.0.4",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
