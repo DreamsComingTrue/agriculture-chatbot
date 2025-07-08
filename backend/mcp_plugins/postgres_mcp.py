@@ -18,6 +18,9 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
         print("tool plan----------------------", llm_reply)
 
         if END_KEYWORD in llm_reply or times == 10:
+            if times == 1:
+                yield generate_sse_data("尝试结束, 该问题不适合使用 MCP 工具解答 \n\n")
+                break
             yield generate_sse_data(
                 "尝试结束, 小羲正在汇总全部信息为您解答, 请稍后...\n\n"
             )
