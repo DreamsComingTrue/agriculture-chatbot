@@ -1,3 +1,5 @@
+import json
+
 from utils.models import generate_with_ollama, generate_with_ollama_stream
 from utils.promptsArchive import (END_KEYWORD, get_mcp_prompt,
                                   get_summary_prompt)
@@ -46,10 +48,10 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
             if times > 1:
                 yield "结合上次结果, 正在进行下一次MCP Tool的尝试\n\n"
 
-            yield f"正在使用MCP tool: {tool}, 参数: {args}\n"
+            yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n"
 
             async for tool_output in call_tool_with_stream(tool, args):
-                yield f"TOOL_OUTPUT: {tool_output}\n\n"
+                yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
                 context_list.append(
                     f"tool: {tool}, args: {args}, output: {tool_output}\n"
                 )
