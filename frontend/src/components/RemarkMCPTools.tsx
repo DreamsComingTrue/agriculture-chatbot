@@ -73,13 +73,13 @@ export const remarkMCPTools: Plugin<[], Root> = () => {
         let output: unknown = outputStr.trim();
 
         try {
-          args = JSON.parse(argsStr.replaceAll("'", '"'));
+          args = JSON.parse(argsStr);
         } catch (e) {
           console.warn('Invalid args JSON:', argsStr, e);
         }
 
         try {
-          output = JSON.parse(outputStr.replaceAll("'", '"'));
+          output = JSON.parse(outputStr);
         } catch (e) {
           console.warn('Invalid output JSON:', outputStr, e);
         }
