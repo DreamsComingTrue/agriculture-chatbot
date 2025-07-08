@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css'; // Or choose another style
+import '@catppuccin/highlightjs/css/catppuccin-mocha.css';
 import { remarkMCPTools } from './RemarkMCPTools';
 import { MCPCard } from './MCPCard';
 import type { PluggableList } from 'unified';
@@ -18,22 +18,36 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = ''
 }) => {
-  const remarkPlugins: PluggableList = [remarkGfm, remarkMCPTools];
+  const remarkPlugins: PluggableList = [
+    remarkGfm,
+    remarkMCPTools
+  ];
   const rehypePlugins: PluggableList = [
     rehypeRaw,
     // rehypeCustomComponents,
     [rehypeHighlight, { ignoreMissing: true }],
   ];
 
-  const formattedContent = content
-    .replace(/<think>/g, '&lt;think&gt;')
-    .replace(/<\/think>/g, '&lt;/think&gt;')
-    .replace(/~/g, '-')
+  // const formattedContent = content
+  //   .replace(/<think>/g, '&lt;think&gt;')
+  //   .replace(/<\/think>/g, '&lt;/think&gt;')
+  //   .replace(/~/g, '-')
+  //
+  const formattedContent = `
+This is some inline code: \`123\` inside a paragraph.
 
+Here is a code block:
+
+\`\`\`sql
+SELECT * FROM users WHERE id = 1;
+\`\`\`
+
+正在使用MCP tool: list_schema, 参数: {{"ttt": hahaha}} TOOL_OUTPUT: \`\`\`sql Select * from table; \`\`\`
+`;
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
-        // children={`Here is a tool:\n\n<mcp-card toolCall='{"tool":"list_schemas","args":{},"output":[1,2,3]}'></mcp-card>`}
+        // children={"<div>sdfsdf`123`hahahah</div>"}
         skipHtml={false}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
@@ -42,15 +56,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           'mcp-card': ({ node }) => {
             return <MCPCard toolCall={node.properties.toolcall} />;
           },
-          // @ts-expect-error known issue
-          code({ inline, className, children, ...props }) {
+          code({ className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
+            const inline = !match;
             return !inline ? (
               <div className="relative">
                 <div className="absolute right-2 top-1 text-xs text-gray-500">
                   {match?.[1] || 'code'}
                 </div>
-                <pre className="w-full overflow-x-auto whitespace-pre rounded-md bg-gray-100 p-4 text-sm">
+                <pre className="w-full overflow-x-auto whitespace-pre rounded-md bg-black p-4 text-sm">
                   <code
                     className={`hljs ${className}`}
                     {...props}
@@ -60,7 +74,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 </pre>
               </div>
             ) : (
-              <code className="bg-gray-500 px-1.5 py-0.5 rounded text-sm font-mono">
+              <code className="hljs">
                 {children}
               </code>
             );
