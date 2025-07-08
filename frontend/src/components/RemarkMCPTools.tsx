@@ -96,6 +96,11 @@ export const remarkMCPTools: Plugin<[], Root> = () => {
         console.log('📦 newChildren pushed html', newChildren);
       }
 
+      if (lastIndex === 0) {
+        newChildren.push(node);
+        continue;
+      }
+
       // Text after last match
       if (lastIndex < fullText.length) {
         const rest = fullText.slice(lastIndex).trim();
