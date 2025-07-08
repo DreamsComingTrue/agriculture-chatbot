@@ -29,12 +29,13 @@ def extract_json(message):
 
 
 def generate_sse_data(str, type="delta"):
+    data = {}
     """格式化SSE消息"""
     if type == "delta":
-        data = {"type": type, "token": json.dumps(str, ensure_ascii=False)}
+        data = {"type": type, "token": str}
     else:
-        data = {"type": type, "message": json.dumps(str, ensure_ascii=False)}
-    return f"data: {data}\n\n"  # SSE格式要求每行以\n结束，消息以\n\n分隔
+        data = {"type": type, "message": str}
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"  # SSE格式要求每行以\n结束，消息以\n\n分隔
 
 
 # MCP 工具触发关键词

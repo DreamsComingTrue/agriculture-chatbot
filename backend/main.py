@@ -125,7 +125,7 @@ async def analyze(request: Request):
                         memory.save_context(
                             {"input": user_prompt}, {"response": full_response}
                         )
-                        yield "data: {'type': 'done'}\n\n"
+                        yield 'data: {"type": "done"}\n\n'
                         return
                     else:
                         prompt = generate_deepseek_prompt(
@@ -149,7 +149,7 @@ async def analyze(request: Request):
                     yield generate_sse_data(token)
 
                 memory.save_context({"input": user_prompt}, {"response": full_response})
-                yield "data: {'type': 'done'}\n\n"
+                yield 'data: {"type": "done"}\n\n'
 
             except Exception as e:
                 # 🆕 记录错误日志到管理后台
