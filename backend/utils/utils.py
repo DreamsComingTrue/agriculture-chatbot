@@ -31,7 +31,70 @@ def extract_json(message):
 def generate_sse_data(str, type="delta"):
     """格式化SSE消息"""
     if type == "delta":
-        data = {"type": type, "token": str}
+        data = {"type": type, "token": json.dumps(str, ensure_ascii=False)}
     else:
-        data = {"type": type, "message": str}
-    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"  # SSE格式要求每行以\n结束，消息以\n\n分隔
+        data = {"type": type, "message": json.dumps(str, ensure_ascii=False)}
+    return f"data: {data}\n\n"  # SSE格式要求每行以\n结束，消息以\n\n分隔
+
+
+# MCP 工具触发关键词
+MCP_TRIGGER_KEYWORDS = [
+    # 通用数据库关键词
+    "数据库",
+    "SQL",
+    "schema",
+    "表结构",
+    "字段",
+    "查询",
+    "执行",
+    "主键",
+    "列名",
+    # list_schemas
+    "有哪些库",
+    "所有的库",
+    "数据库结构",
+    "schema 列表",
+    "数据库目录",
+    "数据源",
+    # list_objects
+    "哪些表",
+    "库里有哪些表",
+    "表清单",
+    "目录结构",
+    "查看数据表",
+    # get_object_details
+    "字段有哪些",
+    "字段结构",
+    "列结构",
+    "主键是",
+    "字段类型",
+    "列名",
+    # execute_sql
+    "select",
+    "from",
+    "join",
+    "where",
+    "group by",
+    "order by",
+    "统计",
+    "查询",
+    "获取",
+    "总数",
+    "平均值",
+    "最大值",
+    "写 SQL",
+]
+
+
+def should_use_mcp_plugin(user_input: str) -> bool:
+    """
+    判断用户输入是否需要启用 MCP 插件
+
+    参数:
+        user_input: str - 用户输入的自然语言
+
+    返回:
+        bool - 是否触发 MCP 工具
+    """
+    lower_input = user_input.lower()
+    return any(keyword.lower() in lower_input for keyword in MCP_TRIGGER_KEYWORDS)
