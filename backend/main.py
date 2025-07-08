@@ -5,7 +5,7 @@ from typing import Optional
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from mcp_plugins.mcp_stream import CLIENT
@@ -15,7 +15,7 @@ from utils.models import generate_with_ollama_stream
 from utils.promptsArchive import (get_agriculture_prompt_with_image,
                                   get_agriculture_prompt_without_image)
 from utils.user_memory import UserMemoryManager
-from utils.utils import generate_sse_data
+from utils.utils import generate_sse_data, should_use_mcp_plugin
 
 
 @asynccontextmanager
@@ -116,15 +116,23 @@ async def analyze(request: Request):
                     prompt = generate_qwen_prompt(user_prompt, memory)
                 else:
                     postgres_mcp_context: list[str] = []
-                    async for item in run_postgres_mcp_tool(
-                        user_prompt, postgres_mcp_context
-                    ):
-                        yield item
-                    prompt = generate_deepseek_prompt(
-                        prompt=user_prompt,
-                        memory=memory,
-                        tool_context="\n".join(postgres_mcp_context),
-                    )
+                    if should_use_mcp_plugin(user_prompt):
+                        async for item in run_postgres_mcp_tool(
+                            user_prompt, postgres_mcp_context
+                        ):
+                            full_response += item
+                            yield generate_sse_data(item)
+                        memory.save_context(
+                            {"input": user_prompt}, {"response": full_response}
+                        )
+                        yield "data: {'type': 'done'}\n\n"
+                        return
+                    else:
+                        prompt = generate_deepseek_prompt(
+                            prompt=user_prompt,
+                            memory=memory,
+                            tool_context="\n".join(postgres_mcp_context),
+                        )
                 print("prompt------------------", prompt)
                 async for chunk in generate_with_ollama_stream(
                     model="qwen2.5vl:7b" if images else "deepseek-r1:8b",
