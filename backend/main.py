@@ -18,7 +18,6 @@ from utils.user_memory import UserMemoryManager
 from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
                          should_use_mcp_plugin)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 异步上下文管理客户端连接
@@ -192,9 +191,7 @@ async def analyze(request: Request):
                 "X-Accel-Buffering": "no",
             },
         )
-
     except Exception as e:
-        # 🆕 记录错误日志到管理后台
         log_async(
             "ERROR",
             f"分析接口异常: {str(e)}",
@@ -202,7 +199,6 @@ async def analyze(request: Request):
             error_code="ANALYZE_API_ERROR",
         )
         pass
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
