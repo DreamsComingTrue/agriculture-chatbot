@@ -134,22 +134,41 @@ async def analyze(request: Request):
                             tool_context="\n".join(postgres_mcp_context),
                         )
                 print("prompt------------------", prompt)
+                inside_think = False
                 async for chunk in generate_with_ollama_stream(
                     model="qwen2.5vl:7b" if images else "deepseek-r1:8b",
                     prompt=prompt,
                     image=images,
                 ):
+                    done = (
+                        bool(chunk.get("done"))
+                        if isinstance(chunk, dict) and "done" in chunk
+                        else False
+                    )
+                    if done:
+                        memory.save_context(
+                            {"input": user_prompt}, {"response": full_response}
+                        )
+                        yield 'data: {"type": "done"}\n\n'
+                        return
                     token = (
                         str(chunk.get("response"))
                         if isinstance(chunk, dict) and "response" in chunk
                         else str(chunk)
                     )
-                    print("token-------------", token)
-                    full_response += token
-                    yield generate_sse_data(token)
-
-                memory.save_context({"input": user_prompt}, {"response": full_response})
-                yield 'data: {"type": "done"}\n\n'
+                    idx = -1
+                    if not inside_think:
+                        idx = token.find("<think>")
+                        if idx != -1:
+                            inside_think = True
+                    else:
+                        idx = token.find("</think>")
+                        if idx != -1:
+                            inside_think = False
+                    if idx == -1 and not inside_think:
+                        print("token-------------", token)
+                        full_response += token
+                        yield generate_sse_data(token)
 
             except Exception as e:
                 # 🆕 记录错误日志到管理后台

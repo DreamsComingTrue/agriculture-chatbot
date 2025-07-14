@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -7,6 +7,7 @@ import '@catppuccin/highlightjs/css/catppuccin-mocha.css';
 import { remarkMCPTools } from './RemarkMCPTools';
 import { MCPCard } from './MCPCard';
 import type { PluggableList } from 'unified';
+import { LoadingLevel, LoadingCmp } from './LoadingCmp';
 
 
 interface MarkdownRendererProps {
@@ -44,6 +45,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   //
   // 正在使用MCP tool: list_schema, 参数: {{"ttt": hahaha}} TOOL_OUTPUT: \`\`\`sql Select * from table; \`\`\`
   // `;
+
+  const [loadingLevel, setLoadingLevel] = React.useState(LoadingLevel.none)
+  useEffect(() => {
+    if (!content) setLoadingLevel(LoadingLevel.normal)
+    else setLoadingLevel(LoadingLevel.none)
+  }, [content])
+
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
@@ -94,6 +102,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           // custom paragraph
           p: ({ children, className }) => (
+            // TODO: Add a parser here
             <p className={className} style={{ margin: '0.5em 0' }}>
               {children}
             </p>
@@ -145,6 +154,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       >
         {formattedContent}
       </ReactMarkdown>
+      <LoadingCmp level={loadingLevel} />
     </div>
   );
 };

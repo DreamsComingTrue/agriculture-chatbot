@@ -231,21 +231,6 @@ export const ChatInterface = ({
     }
   };
 
-  let loadingWords = "";
-  useEffect(() => {
-    let i = 0;
-    setInterval(() => {
-      i++;
-      if (i > 200000) i = 0; // 防止 int 越界
-      const loadingWordList = [
-        "小羲正在全力思考, 请您耐心等待.",
-        "小羲正在全力思考, 请您耐心等待. .",
-        "小羲正在全力思考, 请您耐心等待. . .",
-      ];
-      loadingWords = loadingWordList[i % 3];
-    }, 500);
-  }, [])
-
   return (
     <div className="w-screen mx-auto p-6 bg-[#1a1a1a] min-h-screen">
       <div
@@ -264,7 +249,7 @@ export const ChatInterface = ({
         <div className="w-full h-[45px] flex items-center justify-between px-4 flex-shrink-0">
           <span className="chat-title">AI智能决策</span>
         </div>
-        <div className="flex-1 overflow-y-auto mb-4 p-4">
+        <div className="flex-1 overflow-y-auto p-4 mx-2">
           <div className="flex items-start gap-3 text-gray-400">
             <img src={botAvatar} className="w-10 h-10" alt="AI" />
             <div
@@ -305,7 +290,7 @@ export const ChatInterface = ({
                   color: "#D7ECFF"
                 }}
               >
-                <MarkdownRenderer key={i} content={msg.text ? msg.text : loadingWords} className="text-left" />
+                <MarkdownRenderer key={i} content={msg.text} className="text-left" />
               </div>
               {msg.sender !== "ai" && (
                 <img src={userAvatar} className="w-10 h-10 ml-2" alt="AI" />
