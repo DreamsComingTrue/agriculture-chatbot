@@ -217,5 +217,5 @@ button:focus-visible {
 
 /* 当鼠标悬停在滑块上时的样式 */
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #555; /* 鼠标悬停时滑块的颜色 */
+    background-color: #e7fefb; /* 鼠标悬停时滑块的颜色 */
 }
