@@ -12,7 +12,7 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
     context = ""
     times = 1
 
-    yield "尝试中: 使用MCP插件解决该问题\n\n"
+    yield "loading: mcp_begining \n\n"
     while True:
         prompt = get_mcp_prompt(user_query, context)
         llm_reply = await generate_with_ollama(prompt)
@@ -21,9 +21,9 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
 
         if END_KEYWORD in llm_reply or times == 10:
             if times == 1:
-                yield "尝试结束, 该问题不适合使用 MCP 工具解答 \n\n"
+                yield "loading: mcp_ending_not_match \n\n"
                 break
-            yield "尝试结束, 小羲正在汇总全部信息为您解答, 请稍后...\n\n"
+            yield "loading: mcp_ending_summarize \n\n"
             summary_prompt = get_summary_prompt(user_query, context)
             final_token = ""
             async for chunk in generate_with_ollama_stream(
@@ -46,12 +46,13 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
             tool = plan["tool"]
             args = plan.get("args", {})
             if times > 1:
-                yield "结合上次结果, 正在进行下一次MCP Tool的尝试\n\n"
+                yield "loading: mcp_another_try \n\n"
 
-            yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n"
+            # yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n"
+            yield f"loading: {getLoadingTextByTool(tool)} \n\n"
 
             async for tool_output in call_tool_with_stream(tool, args):
-                yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
+                # yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
                 context_list.append(
                     f"tool: {tool}, args: {args}, output: {tool_output}\n"
                 )
@@ -62,3 +63,18 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
             print("error in run_agent-----------------", e)
             yield f"** Error parsing or executing plan: {e} **\n"
             break
+
+
+# 生成 loading text, 前端匹配
+def getLoadingTextByTool(tool):
+    match tool:
+        case "list_schemas":
+            return "mcp_list_schemas"
+        case "list_objects":
+            return "mcp_list_objects"
+        case "get_object_details":
+            return "mcp_get_object_details"
+        case "execute_sql":
+            return "mcp_execute_sql"
+        case _:
+            return ""

@@ -15,7 +15,8 @@ from utils.models import generate_with_ollama_stream
 from utils.promptsArchive import (get_agriculture_prompt_with_image,
                                   get_agriculture_prompt_without_image)
 from utils.user_memory import UserMemoryManager
-from utils.utils import generate_sse_data, should_use_mcp_plugin
+from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
+                         should_use_mcp_plugin)
 
 
 @asynccontextmanager
@@ -110,7 +111,7 @@ async def analyze(request: Request):
             memory = user_memory_manager.get_memory(chat_id, llm)
 
             try:
-                prompt = ""
+                prompt = user_prompt
                 # Create the prompt based on model
                 if images:
                     prompt = generate_qwen_prompt(user_prompt, memory)
@@ -127,7 +128,7 @@ async def analyze(request: Request):
                         )
                         yield 'data: {"type": "done"}\n\n'
                         return
-                    else:
+                    elif should_apply_enhanced_prompt(user_prompt):
                         prompt = generate_deepseek_prompt(
                             prompt=user_prompt,
                             memory=memory,
@@ -136,7 +137,7 @@ async def analyze(request: Request):
                 print("prompt------------------", prompt)
                 inside_think = False
                 async for chunk in generate_with_ollama_stream(
-                    model="qwen2.5vl:7b" if images else "deepseek-r1:8b",
+                    model="qwen2.5vl:7b" if images else "qwen3:32b",
                     prompt=prompt,
                     image=images,
                 ):
