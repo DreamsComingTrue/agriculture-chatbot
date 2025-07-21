@@ -1,29 +1,28 @@
 import torch
 from PIL import Image
 from qdrant_client import QdrantClient
-from qdrant_client.models import (CollectionStatus, Distance,
+from qdrant_client.models import (CollectionStatus, Distance, PointStruct,
                                   VectorParams)
 from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor
 from qdrant_client.models import CollectionInfo
-from sentence_transformers import SentenceTransformer
 
 
 # ========== Bge Text Embedding ==========
 class BgeEmbedder:
     def __init__(self, model_name="BAAI/bge-large-zh-v1.5"):
 
-#        self.model = SentenceTransformer(model_name)
-        self.model = SentenceTransformer(
-            "/home/zhangguoqing/.cache/huggingface/hub/models--BAAI--bge-large-zh-v1.5/snapshots/79e7739b6ab944e86d6171e44d24c997fc1e0116"
-        )
+       self.model = SentenceTransformer(model_name)
+        # self.model = SentenceTransformer(
+        #     "/home/zhangguoqing/.cache/huggingface/hub/models--BAAI--bge-large-zh-v1.5/snapshots/79e7739b6ab944e86d6171e44d24c997fc1e0116"
+        # )
     def embed(self, text: str):
         return self.model.encode(text, normalize_embeddings=True).tolist()
 
 # ========== CLIP Image Embedding ==========
 class CLIPEmbedder:
-    #def __init__(self, model_id="openai/clip-vit-base-patch32"):
-    def __init__(self, model_id="/home/zhangguoqing/.cache/huggingface/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"):
+    def __init__(self, model_id="openai/clip-vit-base-patch32"):
+    # def __init__(self, model_id="/home/zhangguoqing/.cache/huggingface/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"):
         self.model = CLIPModel.from_pretrained(model_id)
         self.processor = CLIPProcessor.from_pretrained(model_id)
 
