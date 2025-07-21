@@ -4,8 +4,9 @@ from uuid import uuid4
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 
-from pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
+from pipeline import (COLLECTION_NAME, CLIPEmbedder,
                     BgeEmbedder, client)
+from qdrant_client.models import PointStruct
 from fastapi.responses import JSONResponse
 from typing import Optional
 
