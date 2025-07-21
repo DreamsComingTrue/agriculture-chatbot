@@ -1,9 +1,14 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css'; // Or choose another style
+import '@catppuccin/highlightjs/css/catppuccin-mocha.css';
+import { remarkMCPTools } from './RemarkMCPTools';
+import { MCPCard } from './MCPCard';
 import type { PluggableList } from 'unified';
+import { extractLoadingInfo, LoadingCmp } from './LoadingCmp';
+
 
 interface MarkdownRendererProps {
   content: string;
@@ -14,26 +19,55 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = ''
 }) => {
-  const remarkPlugins: PluggableList = [remarkGfm];
-  const rehypePlugins: PluggableList = [
-    [rehypeHighlight, { ignoreMissing: true }]
+  const remarkPlugins: PluggableList = [
+    remarkGfm,
+    remarkMCPTools
   ];
+  const rehypePlugins: PluggableList = [
+    rehypeRaw,
+    // rehypeCustomComponents,
+    [rehypeHighlight, { ignoreMissing: true }],
+  ];
+
+  const formattedContent = content
+    // don't show the think tag anymore
+    // .replace(/<think>/g, '&lt;think&gt;')
+    // .replace(/<\/think>/g, '&lt;/think&gt;')
+    .replace(/~/g, '-')
+
+  //   const formattedContent = `
+  // This is some inline code: \`123\` inside a paragraph.
+  //
+  // Here is a code block:
+  //
+  // \`\`\`sql
+  // SELECT * FROM users WHERE id = 1;
+  // \`\`\`
+  //
+  // 正在使用MCP tool: list_schema, 参数: {{"ttt": hahaha}} TOOL_OUTPUT: \`\`\`sql Select * from table; \`\`\`
+  // `;
 
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
+        // children={"<div>sdfsdf`123`hahahah</div>"}
+        skipHtml={false}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
         components={{
-          // @ts-expect-error known issue
-          code({ inline, className, children, ...props }) {
+          // @ts-expect-error any and node types
+          'mcp-card': ({ node }) => {
+            return <MCPCard toolCall={node.properties.toolcall} />;
+          },
+          code({ className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return inline ? (
+            const inline = !match;
+            return !inline ? (
               <div className="relative">
                 <div className="absolute right-2 top-1 text-xs text-gray-500">
                   {match?.[1] || 'code'}
                 </div>
-                <pre className="bg-gray-400 p-4 rounded-md overflow-x-auto mt-6">
+                <pre className="w-full overflow-x-auto whitespace-pre rounded-md bg-black p-4 text-sm">
                   <code
                     className={`hljs ${className}`}
                     {...props}
@@ -43,11 +77,44 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 </pre>
               </div>
             ) : (
-              <code className="bg-gray-500 px-1.5 py-0.5 rounded text-sm font-mono">
+              <code className="hljs">
                 {children}
               </code>
             );
           },
+          h2: ({ children, className }) => (
+            <h2 className={className} style={{ margin: '1em 0' }}>
+              {children}
+            </h2>
+          ),
+
+          // custom H3
+          h3: ({ children, className }) => (
+            <h3 className={className} style={{ margin: '0.75em 0' }}>
+              {children}
+            </h3>
+          ),
+
+          // custom paragraph
+          p: ({ children, className }) => {
+            // extract loading info and do nothing
+            console.log("p----------------- ", children)
+            const match = extractLoadingInfo(children as string)
+            return !match
+              ? (
+                <p className={className} style={{ margin: '0.5em 0' }}>
+                  {children}
+                </p>
+              )
+              : <></>
+          },
+
+          // custom unordered list
+          ul: ({ children, className }) => (
+            <ul className={className} style={{ margin: '0.5em 0 1em 1.5em' }}>
+              {children}
+            </ul>
+          ),
           table({ children }) {
             return (
               <div className="overflow-x-auto">
@@ -86,8 +153,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // Add more custom components as needed
         }}
       >
-        {content}
+        {formattedContent}
       </ReactMarkdown>
+      <LoadingCmp content={formattedContent} />
     </div>
   );
 };

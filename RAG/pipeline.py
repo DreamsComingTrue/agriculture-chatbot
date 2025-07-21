@@ -1,8 +1,9 @@
 import torch
 from PIL import Image
 from qdrant_client import QdrantClient
-from qdrant_client.models import (CollectionStatus, Distance, PointStruct,
+from qdrant_client.models import (CollectionStatus, Distance,
                                   VectorParams)
+from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor
 from qdrant_client.models import CollectionInfo
 from sentence_transformers import SentenceTransformer
@@ -38,6 +39,12 @@ class CLIPEmbedder:
         with torch.no_grad():
             outputs = self.model.get_image_features(**inputs)
         return outputs.squeeze().tolist()
+
+    # def embed_from_pil(self, image: Image.Image):
+    #     inputs = self.processor(images=image, return_tensors="pt")
+    #     with torch.no_grad():
+    #         outputs = self.model.get_image_features(**inputs)
+    #     return outputs.squeeze().tolist()
 
 
 # ========== Qdrant Setup ==========

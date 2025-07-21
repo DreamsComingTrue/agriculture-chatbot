@@ -1,23 +1,22 @@
 import asyncio
-import json
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
-from utils.mcp.query_router import generate_sql
-from utils.mcp.schema import get_all_schemas, init_db_pools, mysql_pools
-from utils.mcp.sql_agent import execute_sql
+from mcp_plugins.mcp_stream import CLIENT
+from mcp_plugins.postgres_mcp import run_postgres_mcp_tool
 from utils.memory import WindowedSummaryMemory
 from utils.models import generate_with_ollama_stream
 from utils.promptsArchive import (get_agriculture_prompt_with_image,
                                   get_agriculture_prompt_without_image)
 from utils.user_memory import UserMemoryManager
+from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
+                         should_use_mcp_plugin)
 
 from utils.search_qdrant import fetch_qdrant_knowledge
 from PIL import Image
@@ -25,11 +24,11 @@ import io
 import base64
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # init db pools
-    await init_db_pools()
-    yield
-    # clear all mysql connection after finished
-    mysql_pools.clear()
+    # 异步上下文管理客户端连接
+    async with CLIENT as client:
+        # 初始化连接
+        await client.ping()
+        yield
 
 
 # Initialize FastAPI app
@@ -56,7 +55,7 @@ async def log_to_management(level: str, message: str, **kwargs):
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             await client.post(
-                "http://localhost:8000/api/v1/log",
+                "http://localhost:8100/api/v1/log",
                 json={
                     "level": level,
                     "module": "ollama_service",
@@ -87,12 +86,11 @@ def generate_qwen_prompt(query: str, memory):
 def generate_deepseek_prompt(
     prompt: str,
     memory: WindowedSummaryMemory,
-    generated_sql: Optional[str] = "",
-    sql_result: Optional[str] = "",
+    tool_context: Optional[str] = "",
 ) -> str:
     history = memory.load_memory_variables({}).get("history", "")
     generated_prompt = get_agriculture_prompt_without_image(
-        history, prompt, generated_sql, sql_result
+        history, prompt, tool_context
     )
     return generated_prompt
 
@@ -102,6 +100,7 @@ async def analyze(request: Request):
     data = await request.json()
     try:
         user_prompt = data.get("prompt", "")
+<<<<<<< HEAD
         targetDB = data.get("targetDB", "")
         images = data.get("images", [])  # 用户上传的图片（base64字符串列表）
         chat_id = data.get("chat_id", "default")
@@ -194,6 +193,94 @@ async def analyze(request: Request):
             async for item in deepseek_stream():
                 yield item
 
+=======
+        images = data.get("images", [])
+        chat_id = data.get("chat_id", "default")
+
+        # Async generator function
+        async def generate_stream():
+            # print("into generate stream------------------------------")
+            full_response = ""
+            # Select model based on input
+            # Keep the qwen instance temporarily
+            # llm = qwen_model if images else deepseek_model
+            llm = "deepseek-r1:8b"
+            memory = user_memory_manager.get_memory(chat_id, llm)
+
+            try:
+                prompt = user_prompt
+                # Create the prompt based on model
+                if images:
+                    prompt = generate_qwen_prompt(user_prompt, memory)
+                else:
+                    postgres_mcp_context: list[str] = []
+                    if should_use_mcp_plugin(user_prompt):
+                        async for item in run_postgres_mcp_tool(
+                            user_prompt, postgres_mcp_context
+                        ):
+                            full_response += item
+                            yield generate_sse_data(item)
+                        memory.save_context(
+                            {"input": user_prompt}, {"response": full_response}
+                        )
+                        yield 'data: {"type": "done"}\n\n'
+                        return
+                    elif should_apply_enhanced_prompt(user_prompt):
+                        prompt = generate_deepseek_prompt(
+                            prompt=user_prompt,
+                            memory=memory,
+                            tool_context="\n".join(postgres_mcp_context),
+                        )
+                print("prompt------------------", prompt)
+                inside_think = False
+                async for chunk in generate_with_ollama_stream(
+                    model="qwen2.5vl:7b" if images else "qwen3:32b",
+                    prompt=prompt,
+                    image=images,
+                ):
+                    done = (
+                        bool(chunk.get("done"))
+                        if isinstance(chunk, dict) and "done" in chunk
+                        else False
+                    )
+                    if done:
+                        memory.save_context(
+                            {"input": user_prompt}, {"response": full_response}
+                        )
+                        yield 'data: {"type": "done"}\n\n'
+                        return
+                    token = (
+                        str(chunk.get("response"))
+                        if isinstance(chunk, dict) and "response" in chunk
+                        else str(chunk)
+                    )
+                    idx = -1
+                    if not inside_think:
+                        idx = token.find("<think>")
+                        if idx != -1:
+                            inside_think = True
+                    else:
+                        idx = token.find("</think>")
+                        if idx != -1:
+                            inside_think = False
+                    if idx == -1 and not inside_think:
+                        print("token-------------", token)
+                        full_response += token
+                        yield generate_sse_data(token)
+
+            except Exception as e:
+                # 🆕 记录错误日志到管理后台
+                log_async(
+                    "ERROR",
+                    f"Ollama API调用失败: {str(e)}",
+                    model_name=llm,
+                    chat_id=chat_id,
+                    error_code="OLLAMA_API_ERROR",
+                )
+                yield generate_sse_data(f"generate_stream error: {str(e)}", "error")
+
+        # Return streaming response
+>>>>>>> 27ec55ee9a9de244af8a01d350366ea45bf48420
         return StreamingResponse(
             merged_stream(),
             media_type="text/event-stream",
@@ -210,7 +297,7 @@ async def analyze(request: Request):
             chat_id=data.get("chat_id", "unknown"),
             error_code="ANALYZE_API_ERROR",
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        pass
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)

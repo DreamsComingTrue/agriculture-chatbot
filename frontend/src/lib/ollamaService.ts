@@ -27,6 +27,7 @@ export const generateResponse = async (
       body: JSON.stringify(payload),
       signal
     });
+    // const response = await { ok: true, body: { getReader: () => ({ read: () => ({ done: true, value: new ArrayBuffer() }) }) }, status: 200 }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
