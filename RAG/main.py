@@ -2,8 +2,7 @@ import os
 from uuid import uuid4
 
 import uvicorn
-from fastapi import FastAPI, File, Form, UploadFile
-
+from fastapi import FastAPI, File, Form, UploadFile, Body
 from pipeline import (COLLECTION_NAME, CLIPEmbedder, PointStruct,
                     BgeEmbedder, client)
 from fastapi.responses import JSONResponse

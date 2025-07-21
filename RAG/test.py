@@ -11,7 +11,7 @@ while True:
         break
 
     try:
-        response = requests.get(API_URL, params={"query": query, "top_k": 3})
+        response = requests.post(API_URL, data={"text": query, "top_k": 3})
         response.raise_for_status()
         results = response.json()
 
@@ -21,17 +21,8 @@ while True:
 
         for i, payload in enumerate(results):
             print(f"\n--- Top {i+1} ---")
-            
-          
-            # print(payload)
-            # if payload.get("page_title"):
-            #     print(payload['page_title'])
-
             if payload.get("page_content"):
                 print(payload["page_content"])
-
-
-
             if payload.get("image_path"):
                 print(f"图片路径：{payload['image_path']}")
             print("-" * 40)
