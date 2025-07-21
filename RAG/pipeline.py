@@ -1,7 +1,7 @@
 import torch
 from PIL import Image
 from qdrant_client import QdrantClient
-from qdrant_client.models import (CollectionStatus, Distance,
+from qdrant_client.models import (CollectionStatus, Distance, PointStruct,
                                   VectorParams)
 from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor

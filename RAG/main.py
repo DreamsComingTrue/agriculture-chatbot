@@ -92,7 +92,7 @@ async def unified_multimodal_search(
         # 图像查询
         if image_base64:
             try:
-                image_bytes = base64.b64decode(header_removed)
+                image_bytes = base64.b64decode(image_base64)
                 image = Image.open(BytesIO(image_bytes)).convert("RGB")
 
                 image_vector = image_embedder.embed_from_pil(image)
