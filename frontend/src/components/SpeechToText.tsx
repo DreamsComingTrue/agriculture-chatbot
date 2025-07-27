@@ -6,6 +6,7 @@ import rotating_circle from "@/assets/rotating_circle.gif";
 import type { RecorderManager } from "@/index";
 
 import CryptoJS from "crypto-js"; // 用于生成签名
+import { VoiceWakeup } from "./VoiceWakeup";
 
 interface SpeechToTextProps {
   disabled: boolean;
@@ -18,7 +19,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   disabled = false,
   afterTranslate,
   onVoiceActive,
-  onVoiceInActive,
+  onVoiceInActive
 }) => {
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isWSActive, setIsWSActive] = useState(false);
@@ -42,7 +43,9 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
     const authorizationOrigin = `api_key="${API_KEY}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`;
     const authorization = btoa(authorizationOrigin);
 
-    return `wss://${host}${uri}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+    return `wss://${host}${uri}?authorization=${authorization}&date=${encodeURIComponent(
+      date
+    )}&host=${host}`;
   };
 
   useEffect(() => {
@@ -62,8 +65,8 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
             status: 1, // 中间帧
             format: "audio/L16;rate=16000",
             encoding: "raw",
-            audio: base64Audio,
-          },
+            audio: base64Audio
+          }
         };
 
         wsRef.current.send(JSON.stringify(payload));
@@ -78,14 +81,19 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
             status: 2,
             format: "audio/L16;rate=16000",
             encoding: "raw",
-            audio: "",
-          },
+            audio: ""
+          }
         };
         wsRef.current.send(JSON.stringify(endPayload));
       }
       setIsVoiceActive(false);
       setIsWSActive(false);
       onVoiceInActive?.();
+      
+      // 恢复语音唤醒检测
+      setTimeout(() => {
+        (window as any).resumeWakeupDetection?.();
+      }, 1000); // 延迟1秒后恢复，确保所有状态都已重置
     };
   }, [onVoiceInActive]);
 
@@ -97,27 +105,27 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
     ws.onopen = () => {
       const payload = {
         common: {
-          app_id: APP_ID,
+          app_id: APP_ID
         },
         business: {
           language: "zh_cn",
           domain: "iat",
           accent: "mandarin",
-          vad_eos: 5000,
+          vad_eos: 5000
         },
         data: {
           status: 0,
           format: "audio/L16;rate=16000",
           encoding: "raw",
-          audio: "",
-        },
+          audio: ""
+        }
       };
       ws.send(JSON.stringify(payload));
       setIsWSActive(true);
       onVoiceActive?.();
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
       const res = JSON.parse(event.data);
       if (res.data?.result) {
         const result = parseResult(res.data.result);
@@ -126,18 +134,23 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       }
     };
 
-    ws.onerror = (e) => {
+    ws.onerror = e => {
       console.error("WebSocket 错误", e);
       setIsVoiceActive(false);
       setIsWSActive(false);
-      onVoiceInActive?.()
+      onVoiceInActive?.();
     };
 
     ws.onclose = () => {
       console.log("WebSocket 已关闭");
       setIsVoiceActive(false);
       setIsWSActive(false);
-      onVoiceInActive?.()
+      onVoiceInActive?.();
+      
+      // WebSocket关闭时也恢复语音唤醒检测
+      setTimeout(() => {
+        (window as any).resumeWakeupDetection?.();
+      }, 1000);
     };
   };
 
@@ -160,20 +173,40 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       connectWebSocket();
       recorderRef.current.start({
         sampleRate: 16000,
-        frameSize: 1280,
+        frameSize: 1280
       });
     }
     setIsVoiceActive(!isVoiceActive);
   };
 
+  // 添加语音唤醒处理函数
+  const handleWakeup = () => {
+    if (!isVoiceActive && !disabled) {
+      handleToggle();
+    }
+  };
+
   return (
-    <div className={`w-full h-full ${disabled ? "cursor-not-allowed" : ""}`} onClick={handleToggle}>
-      <img
-        src={isVoiceActive ? (isWSActive ? voiceActiveIcon : rotating_circle) : (isWSActive ? rotating_circle : voiceIcon)}
-        alt="语音"
-        className="w-full h-full"
-      />
-    </div>
+    <>
+      <VoiceWakeup onWakeup={handleWakeup} />
+      <div
+        className={`w-full h-full ${disabled ? "cursor-not-allowed" : ""}`}
+        onClick={handleToggle}
+      >
+        <img
+          src={
+            isVoiceActive
+              ? isWSActive
+                ? voiceActiveIcon
+                : rotating_circle
+              : isWSActive
+              ? rotating_circle
+              : voiceIcon
+          }
+          alt="语音"
+          className="w-full h-full"
+        />
+      </div>
+    </>
   );
 };
-
