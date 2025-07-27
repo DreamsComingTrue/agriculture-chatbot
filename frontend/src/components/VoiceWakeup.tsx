@@ -9,13 +9,13 @@ interface VoiceWakeupProps {
 
 export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
   onWakeup,
-  wakeupKeyword = "小羲小羲"
+  wakeupKeyword = "一二三"
 }) => {
   const [isListening, setIsListening] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);  // 新增：用于控制是否暂停唤醒检测
+  const [isPaused, setIsPaused] = useState(false); // 新增：用于控制是否暂停唤醒检测
   const recognitionRef = useRef<any>(null);
   const restartTimeoutRef = useRef<any>(null);
-  const hasProcessedRef = useRef(false);  // 新增：用于防止重复处理同一次唤醒
+  const hasProcessedRef = useRef(false); // 新增：用于防止重复处理同一次唤醒
 
   // 将文字转换为拼音（不带声调）
   const convertToPinyin = (text: string): string => {
@@ -36,13 +36,6 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
       .toLowerCase()
       .replace(/[^a-z]/g, "");
 
-    console.log("拼音对比：", {
-      text1,
-      text2,
-      pinyin1,
-      pinyin2
-    });
-
     return pinyin1.includes(pinyin2) || pinyin2.includes(pinyin1);
   };
 
@@ -58,6 +51,14 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
     startListening();
   };
 
+  // 新增：暂停语音唤醒检测的函数
+  const pauseWakeupDetection = () => {
+    setIsPaused(true);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  };
+
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -70,7 +71,7 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
     recognitionRef.current = recognition;
 
     recognition.continuous = false;
-    recognition.interimResults = false;  // 改为 false，只获取最终结果
+    recognition.interimResults = false; // 改为 false，只获取最终结果
     recognition.lang = "zh-CN";
     recognition.maxAlternatives = 1;
 
@@ -89,51 +90,69 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
 
       if (isPinyinMatch(text, wakeupKeyword)) {
         console.log("检测到唤醒词匹配！原文:", text, "唤醒词:", wakeupKeyword);
-        
+
         // 标记已处理并暂停检测
         hasProcessedRef.current = true;
         setIsPaused(true);
-        
+
         // 停止当前识别
         recognition.stop();
 
         if ("speechSynthesis" in window) {
           const speech = new SpeechSynthesisUtterance("我在！请说出你的问题");
           speech.lang = "zh-CN";
-          speech.volume = 1; // 设置音量为最大
-          speech.rate = 1; // 设置语速为正常
-          speech.pitch = 1; // 设置音高为正常
+          speech.rate = 1;
+          speech.pitch = 1;
+          speech.volume = 1;
 
-          // 添加更多的事件处理
+          // 设置一个超时保护，确保即使语音合成没有正常工作，也会继续执行
+          const timeoutId = setTimeout(() => {
+            console.log("语音合成超时，继续执行");
+            window.speechSynthesis.cancel(); // 取消可能的待处理语音
+            onWakeup();
+          }, 3000); // 3秒后如果还没有播放完成，就强制继续
+
+          // 添加更多事件监听器来帮助调试
           speech.onstart = () => {
-            console.log("语音播放开始");
+            console.log("语音合成开始播放");
           };
 
           speech.onend = () => {
-            console.log("语音播放结束");
-            // 确保在语音播放完成后再调用 onWakeup
-            setTimeout(() => {
-              onWakeup();
-            }, 100);
-          };
-
-          speech.onerror = (event) => {
-            console.error("语音合成错误:", event);
-            // 如果播放失败，也要调用 onWakeup
+            console.log("语音合成播放结束");
+            clearTimeout(timeoutId); // 清除超时保护
             onWakeup();
           };
 
-          // 在播放前取消所有正在进行的语音
+          speech.onerror = event => {
+            console.error("语音合成错误:", event);
+            clearTimeout(timeoutId); // 清除超时保护
+            onWakeup();
+          };
+
+          speech.onpause = () => {
+            console.log("语音合成被暂停");
+          };
+
+          speech.onresume = () => {
+            console.log("语音合成已恢复");
+          };
+
+          // 取消所有正在进行的语音
           window.speechSynthesis.cancel();
 
-          // 确保语音合成服务处于激活状态
-          if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-          }
+          // 确保语音合成服务处于正确状态
+          window.speechSynthesis.cancel(); // 先取消所有待处理的语音
 
-          // 使用 setTimeout 确保语音合成服务已准备好
+          // 使用 setTimeout 确保语音列表已加载
           setTimeout(() => {
-            window.speechSynthesis.speak(speech);
+            try {
+              window.speechSynthesis.speak(speech);
+              console.log("语音合成speak方法已调用");
+            } catch (innerError) {
+              console.error("语音播放执行错误:", innerError);
+              clearTimeout(timeoutId);
+              onWakeup();
+            }
           }, 100);
         } else {
           console.warn("浏览器不支持语音合成");
@@ -151,8 +170,8 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
         clearTimeout(restartTimeoutRef.current);
       }
 
-      // 只有在非暂停状态下才重新启动
-      if (!isPaused) {
+      // 只有在非暂停状态且未处理唤醒词的情况下才重新启动
+      if (!isPaused && !hasProcessedRef.current) {
         restartTimeoutRef.current = setTimeout(() => {
           if (!recognitionRef.current || isPaused) return;
           try {
@@ -173,8 +192,12 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
         clearTimeout(restartTimeoutRef.current);
       }
 
-      // 只有在非暂停状态且错误不是 not-allowed 时才重新启动
-      if (event.error !== "not-allowed" && !isPaused) {
+      // 只有在非暂停状态、未处理唤醒词且错误不是 not-allowed 时才重新启动
+      if (
+        event.error !== "not-allowed" &&
+        !isPaused &&
+        !hasProcessedRef.current
+      ) {
         restartTimeoutRef.current = setTimeout(() => {
           startListening();
         }, 1000);
@@ -212,9 +235,11 @@ export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
   useEffect(() => {
     // 将恢复函数添加到 window 对象上，方便外部调用
     (window as any).resumeWakeupDetection = resumeWakeupDetection;
-    
+    (window as any).pauseWakeupDetection = pauseWakeupDetection; // 暴露暂停函数
+
     return () => {
       delete (window as any).resumeWakeupDetection;
+      delete (window as any).pauseWakeupDetection; // 清理暂停函数
     };
   }, []);
 

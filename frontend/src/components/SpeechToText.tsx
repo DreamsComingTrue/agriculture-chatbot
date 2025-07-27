@@ -89,7 +89,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       setIsVoiceActive(false);
       setIsWSActive(false);
       onVoiceInActive?.();
-      
+
       // 恢复语音唤醒检测
       setTimeout(() => {
         (window as any).resumeWakeupDetection?.();
@@ -146,7 +146,7 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       setIsVoiceActive(false);
       setIsWSActive(false);
       onVoiceInActive?.();
-      
+
       // WebSocket关闭时也恢复语音唤醒检测
       setTimeout(() => {
         (window as any).resumeWakeupDetection?.();
@@ -165,11 +165,15 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   };
 
   const handleToggle = () => {
+    console.info(9999, isVoiceActive);
     if (!recorderRef.current || disabled) return;
 
     if (isVoiceActive) {
       recorderRef.current.stop();
+      // 恢复唤醒监听的逻辑已经在 recorder.onStop 中处理
     } else {
+      // 关闭唤醒监听
+      (window as any).pauseWakeupDetection?.();
       connectWebSocket();
       recorderRef.current.start({
         sampleRate: 16000,
