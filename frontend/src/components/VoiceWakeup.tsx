@@ -9,7 +9,7 @@ interface VoiceWakeupProps {
 
 export const VoiceWakeup: React.FC<VoiceWakeupProps> = ({
   onWakeup,
-  wakeupKeyword = "一二三"
+  wakeupKeyword = "小羲小羲"
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [isPaused, setIsPaused] = useState(false); // 新增：用于控制是否暂停唤醒检测
