@@ -2,7 +2,8 @@ import json
 import uuid
 from tqdm import tqdm
 
-from pipeline import BgeEmbedder, client, COLLECTION_NAME, PointStruct
+from pipeline import BgeEmbedder, client, COLLECTION_NAME 
+from qdrant_client.models import PointStruct
 
 def load_structured_json(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:

@@ -26,7 +26,7 @@ class CLIPEmbedder:
     def __init__(self, model_id="openai/clip-vit-base-patch32"):
         # def __init__(self, model_id="/home/zhangguoqing/.cache/huggingface/hub/models--openai--clip-vit-base-patch32/snapshots/3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"):
         self.model = CLIPModel.from_pretrained(model_id)
-        self.processor = CLIPProcessor.from_pretrained(model_id)
+        self.processor = CLIPProcessor.from_pretrained(model_id, use_fast=True)
 
     def embed(self, image_path: str):
         image = Image.open(image_path).convert("RGB")
