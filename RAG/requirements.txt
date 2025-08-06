@@ -1,7 +1,7 @@
 fastapi
 uuid
 uvicorn
-qdrant-client
+qdrant-client==1.15.0
 sentence-transformers
 transformers
 numpy<2

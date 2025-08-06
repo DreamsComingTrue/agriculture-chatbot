@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "http://localhost:8082/search"
+API_URL = "http://localhost:8100/search"
 
 print("玉米病虫草害智能检索系统（输入 exit 退出）\n")
 
@@ -21,6 +21,10 @@ while True:
 
         for i, payload in enumerate(results):
             print(f"\n--- Top {i+1} ---")
+            print(payload)
+            # if payload.get("page_title"):
+            #     print(payload['page_title'])
+
             if payload.get("page_content"):
                 print(payload["page_content"])
             if payload.get("image_path"):
