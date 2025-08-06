@@ -17,6 +17,7 @@ from utils.promptsArchive import (get_agriculture_prompt_with_image,
 from utils.user_memory import UserMemoryManager
 from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
                          should_use_mcp_plugin)
+from rag.rag import retrieveRAGResult
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,11 +70,11 @@ def log_async(level: str, message: str, **kwargs):
     asyncio.create_task(log_to_management(level, message, **kwargs))
 
 
-def generate_qwen_prompt(query: str, memory):
+def generate_qwen_prompt(query: str, memory, rag_result: list[str] = []):
     history = memory.load_memory_variables({}).get("history", "")
 
     # 构造文本内容
-    prompt_text = get_agriculture_prompt_with_image(query, history)
+    prompt_text = get_agriculture_prompt_with_image(query, history, rag_result)
 
     # 返回标准 message 列表（用于模型调用）
     return prompt_text
@@ -82,11 +83,11 @@ def generate_qwen_prompt(query: str, memory):
 def generate_deepseek_prompt(
     prompt: str,
     memory: WindowedSummaryMemory,
-    tool_context: Optional[str] = "",
+    rag_result: list[str],
 ) -> str:
     history = memory.load_memory_variables({}).get("history", "")
     generated_prompt = get_agriculture_prompt_without_image(
-        history, prompt, tool_context
+        history, prompt, rag_result
     )
     return generated_prompt
 
@@ -109,16 +110,36 @@ async def analyze(request: Request):
             llm = "deepseek-r1:8b"
             memory = user_memory_manager.get_memory(chat_id, llm)
 
+            rag_result = None
+            # Retrieve RAG first
+            if images:
+                rag_result = await retrieveRAGResult(image=images[0])
+            else:
+                rag_result = await retrieveRAGResult(text=user_prompt)
+
+            rag_imgs = []
+            if rag_result:
+                for res in rag_result:
+                    print("rag result----------------", res)
+                    if res.get("image"):
+                        rag_imgs.append(res)
+            if len(rag_imgs) > 0:
+                yield generate_sse_data("小羲从知识库检索到下列相关图片: \n\n")
+                for img in rag_imgs:
+                    yield generate_sse_data(f"RAG image: {img['image']}, title: {img['title']} \n\n")
+
+            filtered_rag_result = [res for res in rag_result if not res.get("image")]
+
             try:
                 prompt = user_prompt
                 # Create the prompt based on model
                 if images:
-                    prompt = generate_qwen_prompt(user_prompt, memory)
+                    prompt = generate_qwen_prompt(user_prompt, memory, filtered_rag_result)
                 else:
                     postgres_mcp_context: list[str] = []
                     if should_use_mcp_plugin(user_prompt):
                         async for item in run_postgres_mcp_tool(
-                            user_prompt, postgres_mcp_context
+                            user_prompt, postgres_mcp_context, filtered_rag_result
                         ):
                             full_response += item
                             yield generate_sse_data(item)
@@ -131,7 +152,7 @@ async def analyze(request: Request):
                         prompt = generate_deepseek_prompt(
                             prompt=user_prompt,
                             memory=memory,
-                            tool_context="\n".join(postgres_mcp_context),
+                            rag_result=filtered_rag_result
                         )
                 print("prompt------------------", prompt)
                 inside_think = False
