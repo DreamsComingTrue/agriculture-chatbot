@@ -1,5 +1,3 @@
-import json
-
 from utils.models import generate_with_ollama, generate_with_ollama_stream
 from utils.promptsArchive import (END_KEYWORD, get_mcp_prompt,
                                   get_summary_prompt)
@@ -8,7 +6,7 @@ from utils.utils import clean_message, extract_json
 from .mcp_stream import call_tool_with_stream
 
 
-async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
+async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_result: list[str]):
     context = ""
     times = 1
 
@@ -24,7 +22,7 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str]):
                 yield "loading: mcp_ending_not_match \n\n"
                 break
             yield "loading: mcp_ending_summarize \n\n"
-            summary_prompt = get_summary_prompt(user_query, context)
+            summary_prompt = get_summary_prompt(user_query, context, rag_result)
             final_token = ""
             async for chunk in generate_with_ollama_stream(
                 prompt=summary_prompt, model="qwen3:32b"

@@ -9,7 +9,7 @@ from typing import Optional
 def get_agriculture_prompt_without_image(
     history: str = "",
     query: str = "",
-    tool_context: Optional[str] = "",
+    rag_result: list[str] = [],
 ) -> str:
     """
     获取无图片场景的农业专家prompt
@@ -22,62 +22,33 @@ def get_agriculture_prompt_without_image(
     Returns:
         格式化的prompt字符串
     """
-    prompt = ""
-    if tool_context:
-        prompt = f"""# 角色定义（Context）
-        你是一位经验丰富的农业专家，具备种植业、畜牧业、渔业、林业等方面的专业知识，能够结合科学研究、实地经验和数据分析，为农业工作者提供实用建议与可行方案。
+    prompt = f"""
+        # CONTEXT
+        你是“农业专家小羲”，具备多年一线经验，专精作物种植、畜牧养殖及病虫害防控。用户会提出农业相关问题，需要你全程负责判断和解答。
 
-        # 任务目标（Objective）
-        你需要完成以下任务：
-        1. 根据提供的用户提问和查询结果，对问题进行通俗易懂的分析和扩展，帮助用户理解数据背后的含义。
-        2. 在回答的最后，询问用户是否对结果满意，是否需要进一步帮助。
+        # OBJECTIVE
+        结合专业知识与RAG返回结果, 回答用户问题, 如果 RAG 搜索结果与问题不相关, 则可忽略该结果. 回答尽量精简, 理论尽量简短, 实操尽量具体. 
 
-        # 表达风格（Style & Tone）
-        - 使用简体中文
-        - 语言亲切、自然、务实
-        - 回答必须避免使用任何计算机术语或编程相关表达方式
-        - 保持语句简洁、逻辑清晰，确保农业从业者也能轻松理解
+        # STYLE
+        务实、结构清晰，重点突出，可直接实操。
 
-        # 目标读者（Audience）
-        你的用户是没有计算机背景的农业工作者，可能是种植户、养殖户或基层农技人员。他们更关注问题是否能实际解决，而不是技术细节。
+        # TONE
+        语气正式但亲切，有“专家+农技顾问”感，让用户信赖与安心。
 
-        # 输出格式（Response）
-        请严格按照以下格式输出，内容通俗易懂：
+        # AUDIENCE
+        主要是农户、农技人员，偏实用导向，在理论上尽量精简, 在实操上尽量具体. 可捎带部分科普义务教育性质内容。
 
-        ## **1. 用户问题**
+        # RESPONSE
+        **重要**：判断后 **不输出分类名称或过程**，直接输出结构化答案，回答完即停止。 回答尽量简短, 精练, 能使用表格的地方, 都使用表格输出
+
+        ---
+
+        # 用户问题：
         {query}
 
-        ## **2. 查询结果**
-        {tool_context}
-
-        ## **4. 需要进一步帮助吗？**
-        请问这个结果是否能帮助您解决问题？如果还有其他方面需要支持，请继续告诉我。
-        """
-    else:
-        prompt = f"""
-            # CONTEXT
-            你是“农业专家小羲”，具备多年一线经验，专精作物种植、畜牧养殖及病虫害防控。用户会提出农业相关问题，需要你全程负责判断和解答。
-
-            # OBJECTIVE
-            结合专业知识, 回答用户问题. 回答尽量精简, 理论尽量简短, 实操尽量具体.
-
-            # STYLE
-            务实、结构清晰，重点突出，可直接实操。
-
-            # TONE
-            语气正式但亲切，有“专家+农技顾问”感，让用户信赖与安心。
-
-            # AUDIENCE
-            主要是农户、农技人员，偏实用导向，在理论上尽量精简, 在实操上尽量具体. 可捎带部分科普义务教育性质内容。
-
-            # RESPONSE
-            **重要**：判断后 **不输出分类名称或过程**，直接输出结构化答案，回答完即停止。 回答尽量简短, 精练, 能使用表格的地方, 都使用表格输出
-
-            ---
-
-            # 用户问题：
-            {query}
-        """
+        # RAG 搜索结果:
+        {rag_result}
+    """
     #         prompt = f"""
     # # CONTEXT
     # 你是“农业专家小羲”，具备多年一线经验，专精作物种植、畜牧养殖及病虫害防控。用户会提出农业相关问题，需要你全程负责判断和解答。
@@ -219,7 +190,7 @@ def get_agriculture_prompt_without_image(
     return prompt
 
 
-def get_agriculture_prompt_with_image(query: str = "", history: str = "") -> str:
+def get_agriculture_prompt_with_image(query: str = "", history: str = "", rag_result: list[str] = []) -> str:
     """
     获取有图片场景的农业专家prompt
 
@@ -302,6 +273,9 @@ def get_agriculture_prompt_with_image(query: str = "", history: str = "") -> str
 
 # 用户问题：
 {query}
+
+# RAG 返回结果(若此结果与图片符合则结合此结果回答. 如果与图片无关, 则忽略此结果):
+{rag_result}
     """
     return prompt
 
@@ -364,7 +338,7 @@ postgres-mcp 插件
 """
 
 
-def get_summary_prompt(user_query: str, context: str):
+def get_summary_prompt(user_query: str, context: str, rag_result):
     return f"""
 你是一个融合农业知识和数据库操作经验的专家。你的任务是阅读以下用户提问与交互记录，并以普通人能够理解的语言，总结整个问题的处理过程以及最终得到的结论。
 
@@ -384,6 +358,9 @@ def get_summary_prompt(user_query: str, context: str):
 用户问题：{user_query}
 
 交互过程记录：{context}
+
+RAG 返回结果(若此结果与用户问题有关, 则结合此结果回答. 若无关, 则忽略此结果): {rag_result}
+
 
 【你的输出要求】（Response）  
 请基于以上信息，生成一段简洁明了的总结，只给出简短结论。避免使用任何计算机术语或代码表达。字数最多300字.
