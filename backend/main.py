@@ -124,7 +124,7 @@ async def analyze(request: Request):
                     if res.get("image"):
                         rag_imgs.append(res)
             if len(rag_imgs) > 0:
-                yield generate_sse_data("小羲从知识库检索到下列相关图片: \n\n")
+                yield generate_sse_data("**小羲从知识库检索到下列相关图片:** \n\n")
                 for img in rag_imgs:
                     yield generate_sse_data(f"RAG image: {img['image']}, title: {img['title']} \n\n")
 

@@ -6,21 +6,11 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { useTranslation } from "react-i18next";
 import chatBg from "../assets/chat-bg.png";
 import botAvatar from "../assets/bot-avatar.png";
-import userAvatar from "../assets/user-avatar.png";
 import textBg from "../assets/text-bg.png";
 import sendBg from "../assets/send-bg.png";
 import robotPng from "../assets/robot.png";
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectGroup,
-//   SelectLabel,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
 import { SpeechToText } from "./SpeechToText.tsx"
 
 
@@ -45,11 +35,6 @@ export const ChatInterface = ({
   const { t } = useTranslation();
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
-
-  // const db_list = useMemo(() => {
-  //   const db_list_str = import.meta.env.VITE_DB_LIST;
-  //   return JSON.parse(db_list_str);
-  // }, [])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -231,6 +216,30 @@ export const ChatInterface = ({
     }
   };
 
+  // 使用React.memo + 自定义arePropsEqual
+  const MemoizedMessage = React.memo(({ msg }: { msg: Message }) => (
+    <div className={`mb-6 ${msg.sender === "user" ? "flex justify-end" : "flex justify-start"}`}>
+      {msg.sender === "ai" && (
+        <img src={botAvatar} className="w-10 h-10 mr-2" alt="AI" />
+      )}
+      <div
+        style={{
+          background: "rgba(17, 96, 73, 0.40)",
+          borderRadius: "4px",
+          padding: "10px",
+          maxWidth: "80%",
+          color: "#D7ECFF"
+        }}
+      >
+        <MarkdownRenderer content={msg.text} />
+      </div>
+    </div>
+  ), (prev, next) => {
+    // 深度比较（假设msg是immutable）
+    return prev.msg.text === next.msg.text
+      && prev.msg.sender === next.msg.sender;
+  });
+
   return (
     <div className="w-screen mx-auto p-6 bg-[#1a1a1a] min-h-screen">
       <div
@@ -270,32 +279,7 @@ export const ChatInterface = ({
             </div>
           </div>
           {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`mb-6 ${msg.sender === "user"
-                ? "flex justify-end"
-                : "flex justify-start"
-                }`}
-            >
-              {msg.sender === "ai" && (
-                <img src={botAvatar} className="w-10 h-10 mr-2" alt="AI" />
-              )}
-              <div
-                key={i}
-                style={{
-                  background: "rgba(17, 96, 73, 0.40)",
-                  borderRadius: "4px",
-                  padding: "10px",
-                  maxWidth: "80%",
-                  color: "#D7ECFF"
-                }}
-              >
-                <MarkdownRenderer key={i} content={msg.text} className="text-left" />
-              </div>
-              {msg.sender !== "ai" && (
-                <img src={userAvatar} className="w-10 h-10 ml-2" alt="AI" />
-              )}
-            </div>
+            <MemoizedMessage key={i} msg={msg} />
           ))}
           <div ref={messagesEndRef} />
         </div>
@@ -328,29 +312,6 @@ export const ChatInterface = ({
           />
 
           <div className="flex items-center justify-end gap-2 mt-2">
-            {/* <Select */}
-            {/*   value={targetDB} */}
-            {/*   defaultValue={targetDB} */}
-            {/*   onValueChange={(val) => { */}
-            {/*     if (val == '/') setTargetDB("") */}
-            {/*     else setTargetDB(val) */}
-            {/*   }} */}
-            {/* > */}
-            {/*   <SelectTrigger className="w-[180px]"> */}
-            {/*     <SelectValue placeholder="查询数据库" /> */}
-            {/*   </SelectTrigger> */}
-            {/*   <SelectContent> */}
-            {/*     <SelectGroup> */}
-            {/*       <SelectLabel>选择一个目标数据库</SelectLabel> */}
-            {/*       <SelectItem value="/">无</SelectItem> */}
-            {/*       { */}
-            {/*         db_list.map((db: { name: string, table_name: string }) => { */}
-            {/*           return <SelectItem value={db.table_name}>{db.name}</SelectItem> */}
-            {/*         }) */}
-            {/*       } */}
-            {/*     </SelectGroup> */}
-            {/*   </SelectContent> */}
-            {/* </Select> */}
             <ImageUploader
               onImagesChange={imgs => {
                 setImages(imgs);
