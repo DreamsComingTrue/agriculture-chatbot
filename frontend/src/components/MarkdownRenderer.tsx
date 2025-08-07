@@ -15,6 +15,22 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
+/**
+  * extract path and title from response
+  */
+const extractImageData = (str: string) => {
+  const regex = /RAG image: ([^,]+),\s*title:\s*(.+)/;
+  const match = regex.exec(str);
+
+  if (match) {
+    return {
+      path: match[1].trim(),
+      title: match[2].trim()
+    };
+  }
+  return null;
+}
+
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = ''
@@ -99,14 +115,30 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           p: ({ children, className }) => {
             // extract loading info and do nothing
             console.log("p----------------- ", children)
-            const match = extractLoadingInfo(children as string)
-            return !match
-              ? (
-                <p className={className} style={{ margin: '0.5em 0' }}>
-                  {children}
-                </p>
-              )
-              : <></>
+            const matchLoading = extractLoadingInfo(children as string)
+            if (matchLoading) return <></>
+            const matchImage = extractImageData(children as string)
+            if (matchImage) {
+              return (
+                <div className="flex flex-col items-center space-y-2 rag-image-container">
+                  {/* Center the image */}
+                  <img
+                    src={`http://127.0.0.1:8100/image/${matchImage.path}`}
+                    alt={matchImage.title}
+                    title={matchImage.title}
+                    className="max-w-xs max-h-72 object-contain"
+                  />
+
+                  {/* Center the title */}
+                  <div className="text-center text-base font-medium rag-image-title">
+                    {matchImage.title}
+                  </div>
+                </div>
+              );
+            }
+            return <p className={className} style={{ margin: '0.5em 0' }}>
+              {children}
+            </p>
           },
 
           // custom unordered list
