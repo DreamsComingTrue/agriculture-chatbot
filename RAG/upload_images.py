@@ -2,7 +2,7 @@ import os
 import requests
 
 folder_path = "./images"
-url = "http://localhost:8082/embed"
+url = "http://localhost:8100/embed"
 
 for file in os.listdir(folder_path):
     if file.lower().endswith((".jpg", ".png", ".jpeg")):
