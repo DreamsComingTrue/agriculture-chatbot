@@ -213,13 +213,17 @@ async def get_image(image_name: str, width: Optional[int] = None, height: Option
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="Image not found")
         
+        # Cache 1 year
+        headers = {
+            "Cache-Control": "public, max-age=31536000, immutable",  # 1 year
+        }
         # Here you could add image processing (resizing, etc.) if needed
         # For example using Pillow:
         # if width or height:
         #     return process_image(file_path, width, height)
         
         # Return the image file directly
-        return FileResponse(file_path)
+        return FileResponse(file_path, headers=headers)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
