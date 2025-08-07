@@ -123,7 +123,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 <div className="flex flex-col items-center space-y-2 rag-image-container">
                   {/* Center the image */}
                   <img
-                    src={`http://127.0.0.1:8100/image/${matchImage.path}`}
+                    src={`http://${window.location.hostname}:8100/image/${matchImage.path}`}
                     alt={matchImage.title}
                     title={matchImage.title}
                     className="w-xs h-72 object-contain"
