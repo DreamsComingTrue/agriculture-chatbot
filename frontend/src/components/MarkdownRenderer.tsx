@@ -126,7 +126,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                     src={`http://127.0.0.1:8100/image/${matchImage.path}`}
                     alt={matchImage.title}
                     title={matchImage.title}
-                    className="max-w-xs max-h-72 object-contain"
+                    className="w-xs h-72 object-contain"
                   />
 
                   {/* Center the title */}
