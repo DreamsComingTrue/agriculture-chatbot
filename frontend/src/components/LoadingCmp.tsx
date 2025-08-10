@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import type { FC } from 'react'
 
-export const extractLoadingInfo = (inputString: string): string | null => {
-  // 定义正则表达式来匹配 'loading: ' 后面跟随任意字符直到遇到换行符两次
-  const regex = /loading:\s*(.*?)\s*\n*$/;
+export const extractLoadingInfo = (str: string) => {
+  // 匹配所有 loading: xxx
+  const matches = [...str.matchAll(/loading:\s*(.*?)\n\n/g)];
+  if (matches.length === 0) return { lastLoading: null, afterLast: "" };
 
-  // 使用正则表达式的 exec 方法来执行匹配
-  const match = regex.exec(inputString);
+  // 最后一个匹配
+  const lastMatch = matches[matches.length - 1];
+  const lastLoading = lastMatch[1];
 
-  // 如果有匹配项，则返回捕获组中的内容（即 'xxx'），否则返回 null
-  return match ? match[1] : null;
+  // 获取最后一个匹配之后的内容
+  const afterLast = str.slice(lastMatch.index + lastMatch[0].length);
+
+  return { lastLoading, afterLast };
 }
 
 export const LoadingCmp: FC<{ content: string }> = (prop) => {
@@ -22,8 +26,12 @@ export const LoadingCmp: FC<{ content: string }> = (prop) => {
       return
     }
     let text = ""
-    const extractedText = extractLoadingInfo(content)
-    switch (extractedText) {
+    const { lastLoading, afterLast } = extractLoadingInfo(content)
+    if (afterLast) {
+      setLoadingText("")
+      return
+    }
+    switch (lastLoading) {
       case "mcp_begining":
         text = "小羲正在尝试使用MCP插件, 解决该问题..."
         break
