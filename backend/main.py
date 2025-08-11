@@ -52,7 +52,7 @@ async def log_to_management(level: str, message: str, **kwargs):
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             await client.post(
-                "http://localhost:8100/api/v1/log",
+                "http://localhost:8200/api/v1/log",
                 json={
                     "level": level,
                     "module": "ollama_service",
