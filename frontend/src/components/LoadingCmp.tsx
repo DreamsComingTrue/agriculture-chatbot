@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { FC } from 'react'
 
-export const extractLoadingInfo = (str: string) => {
+export const extractLoadingInfo = (str: string, regex = /loading:\s*(.*?)\s*\n\n/g) => {
   // 匹配所有 loading: xxx
-  const matches = [...str.matchAll(/loading:\s*(.*?)\n\n/g)];
+  const matches = [...str.matchAll(regex)];
   if (matches.length === 0) return { lastLoading: null, afterLast: "" };
 
   // 最后一个匹配

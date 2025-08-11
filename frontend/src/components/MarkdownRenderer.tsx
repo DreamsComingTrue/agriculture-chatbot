@@ -115,7 +115,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           p: ({ children, className }) => {
             // extract loading info and do nothing
             console.log("p----------------- ", children)
-            const { lastLoading, afterLast } = extractLoadingInfo(children as string)
+            const { lastLoading, afterLast } = extractLoadingInfo(children as string, /loading:\s*(.*?)/g)
             if (lastLoading) {
               if (!afterLast) return <></> // 用 LoadingCmp render
               else children = afterLast // 否则只渲染loading后的内容
