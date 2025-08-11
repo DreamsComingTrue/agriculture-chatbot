@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:iframe": "vite build --config ./vite.fuxi.config.ts",
+    "dev:iframe": "vite serve ./fuxi_component --config ./vite.demo.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",
@@ -35,6 +37,7 @@
   "devDependencies": {
     "@catppuccin/highlightjs": "^1.0.1",
     "@eslint/js": "^9.25.0",
+    "@popperjs/core": "^2.11.8",
     "@types/crypto-js": "^4.2.2",
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
@@ -53,6 +56,7 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
     "unified": "^11.0.5",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4"
   }
 }
