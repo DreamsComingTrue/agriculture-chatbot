@@ -7,6 +7,11 @@ import type { RecorderManager } from "@/index";
 
 import CryptoJS from "crypto-js"; // 用于生成签名
 import { VoiceWakeup } from "./VoiceWakeup";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface SpeechToTextProps {
   disabled: boolean;
@@ -197,19 +202,27 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
         className={`w-full h-full ${disabled ? "cursor-not-allowed" : ""}`}
         onClick={handleToggle}
       >
-        <img
-          src={
-            isVoiceActive
-              ? isWSActive
-                ? voiceActiveIcon
-                : rotating_circle
-              : isWSActive
-              ? rotating_circle
-              : voiceIcon
-          }
-          alt="语音"
-          className="w-full h-full"
-        />
+        <Tooltip>
+          <TooltipTrigger>
+            <img
+              src={
+                isVoiceActive
+                  ? isWSActive
+                    ? voiceActiveIcon
+                    : rotating_circle
+                  : isWSActive
+                    ? rotating_circle
+                    : voiceIcon
+              }
+              alt="语音"
+              className="w-full h-full"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isVoiceActive ? "关闭语音转换" : "开启语音转文字"}</p>
+          </TooltipContent>
+        </Tooltip>
+
       </div>
     </>
   );

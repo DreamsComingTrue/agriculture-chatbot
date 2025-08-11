@@ -84,3 +84,20 @@ export const generateResponse = async (
     }
   }
 };
+
+
+export const sendCleanContextRequest = async (chat_id: string) => {
+  const domain = window.location.hostname;
+  const response = await fetch(`http://${domain + ":" + import.meta.env.VITE_OLLAMA_PORT}/clean_context/${chat_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};

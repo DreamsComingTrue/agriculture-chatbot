@@ -47,7 +47,7 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_re
                 yield "loading: mcp_another_try \n\n"
 
             # yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n"
-            yield f"loading: {getLoadingTextByTool(tool)} \n\n"
+            # yield f"loading: {getLoadingTextByTool(tool)} \n\n"
 
             async for tool_output in call_tool_with_stream(tool, args):
                 # yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
