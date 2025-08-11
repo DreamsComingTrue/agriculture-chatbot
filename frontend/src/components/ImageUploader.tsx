@@ -1,6 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import imageIcon from "../assets/image.png";
 import imageActiveIcon from "../assets/image-active.png";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type ImageUploaderProps = {
   onImagesChange: (images: string[]) => void;
@@ -93,11 +98,18 @@ export const ImageUploader = ({
           }, 200);
         }}
       >
-        <img
-          src={isImageActive ? imageActiveIcon : imageIcon}
-          alt="上传图片"
-          className="w-full h-full"
-        />
+        <Tooltip>
+          <TooltipTrigger>
+            <img
+              src={isImageActive ? imageActiveIcon : imageIcon}
+              alt="上传图片"
+              className="w-full h-full"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>上传图片</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
       <input
         ref={fileInputRef}
@@ -111,10 +123,9 @@ export const ImageUploader = ({
           file:mr-4 file:py-2 file:px-4
           file:rounded-md file:border-0
           file:text-sm file:font-semibold
-          ${
-            disabled
-              ? "file:bg-gray-200 file:text-gray-500"
-              : "file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          ${disabled
+            ? "file:bg-gray-200 file:text-gray-500"
+            : "file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           }
           ${disabled ? "cursor-not-allowed" : ""}`}
       />

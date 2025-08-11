@@ -13,3 +13,10 @@ class UserMemoryManager:
             self.user_memories[chat_id][llm] = WindowedSummaryMemory(max_window=10)
 
         return self.user_memories[chat_id][llm]
+    
+    def clean_memory(self, chat_id: str, llm: str) -> None:
+        if chat_id not in self.user_memories:
+            self.user_memories[chat_id] = {}
+        if str not in self.user_memories[chat_id]:
+            self.user_memories[chat_id][llm] = WindowedSummaryMemory(max_window=10)
+        self.user_memories[chat_id][llm].clear()

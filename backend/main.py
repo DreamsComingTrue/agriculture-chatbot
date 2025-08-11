@@ -91,6 +91,11 @@ def generate_deepseek_prompt(
     )
     return generated_prompt
 
+@app.get("/clean_context/{chat_id}")
+async def clean_context(chat_id: str):
+    user_memory_manager.clean_memory(chat_id, "deepseek-r1:8b")
+    user_memory_manager.clean_memory(chat_id, "qwen2.5vl:7b")
+    return
 
 @app.post("/analyze")
 async def analyze(request: Request):

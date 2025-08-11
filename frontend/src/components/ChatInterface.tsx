@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import type { Message } from "@/types/types";
 import { generateResponse } from "@/lib/ollamaService";
 import { ImageUploader } from "./ImageUploader";
@@ -8,10 +8,10 @@ import chatBg from "../assets/chat-bg.png";
 import botAvatar from "../assets/bot-avatar.png";
 import textBg from "../assets/text-bg.png";
 import sendBg from "../assets/send-bg.png";
-import robotPng from "../assets/robot.png";
 import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managementApi";
 import { logError } from "@/lib/logService";
 import { SpeechToText } from "./SpeechToText.tsx"
+import { CleanContextBtn } from "./CleanContextBtn.tsx";
 
 
 interface ChatInterfaceProps {
@@ -35,6 +35,7 @@ export const ChatInterface = ({
   const { t } = useTranslation();
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
+  const default_chat_id = useMemo(() => `chat_${Date.now()}`, [])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -100,7 +101,7 @@ export const ChatInterface = ({
         {
           prompt: input,                    // ✅ 发送原始用户输入
           images: userMessage.images,      // ✅ 发送图片
-          chat_id: savedUserMessage?.chat_id || `chat_${Date.now()}`,    // ✅ 使用返回的chat_id
+          chat_id: userMessageId || default_chat_id,    // ✅ 使用返回的chat_id
           targetDB: targetDB
         },
         (data) => {
@@ -240,6 +241,10 @@ export const ChatInterface = ({
       && prev.msg.sender === next.msg.sender;
   });
 
+  const cleanContext = React.useCallback(() => {
+    setMessages([])
+  }, [])
+
   return (
     <div className="w-screen mx-auto bg-[#1a1a1a] min-h-screen">
       <div
@@ -319,7 +324,6 @@ export const ChatInterface = ({
               disabled={isLoading}
               resetTrigger={shouldResetImages}
             />
-
             <div
               className="w-8 h-8 flex items-center justify-center cursor-pointer"
             >
@@ -337,6 +341,12 @@ export const ChatInterface = ({
                   }, 500);
                 }}
               ></SpeechToText>
+            </div>
+
+            <div
+              className="w-8 h-8 flex items-center justify-center cursor-pointer text-white"
+            >
+              <CleanContextBtn cleanContext={cleanContext} chatId={default_chat_id} />
             </div>
 
             <div
