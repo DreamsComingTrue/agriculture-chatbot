@@ -319,6 +319,13 @@ postgres-mcp 插件
 - 如果 history 信息足够生成最终SQL，直接使用execute_sql
 - 如果还需要更多元数据，选择合适的工具获取
 - 禁止重复调用已获取过信息的工具
+下面是关键词与数据库表名的映射关系, 分析用户问题中, 如果有涉及其中key值, 使用后面的表来生成 sql 解决问题
+[
+  "农机": ["tools"],
+  "农具": ["tools"],
+  "种子": ["seed_bank_info", "seed_bank_attribute"]
+]
+
 
 # 输出格式（JSON）示例：
 
