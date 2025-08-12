@@ -115,29 +115,31 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           p: ({ children, className }) => {
             // extract loading info and do nothing
             console.log("p----------------- ", children)
-            const { lastLoading, afterLast } = extractLoadingInfo(children as string, /loading:\s*(.*?)$/g)
-            if (lastLoading) {
-              if (!afterLast) return <></> // 用 LoadingCmp render
-              else children = afterLast // 否则只渲染loading后的内容
-            }
-            const matchImage = extractImageData(children as string)
-            if (matchImage) {
-              return (
-                <div className="flex flex-col items-center space-y-2 rag-image-container">
-                  {/* Center the image */}
-                  <img
-                    src={`http://${window.location.hostname}:8100/image/${matchImage.path}`}
-                    alt={matchImage.title}
-                    title={matchImage.title}
-                    className="w-xs h-72 object-contain"
-                  />
+            if (typeof children === "string") {
+              const { lastLoading, afterLast } = extractLoadingInfo(children as string, /loading:\s*(.*?)$/g)
+              if (lastLoading) {
+                if (!afterLast) return <></> // 用 LoadingCmp render
+                else children = afterLast // 否则只渲染loading后的内容
+              }
+              const matchImage = extractImageData(children as string)
+              if (matchImage) {
+                return (
+                  <div className="flex flex-col items-center space-y-2 rag-image-container">
+                    {/* Center the image */}
+                    <img
+                      src={`http://${window.location.hostname}:8100/image/${matchImage.path}`}
+                      alt={matchImage.title}
+                      title={matchImage.title}
+                      className="w-xs h-72 object-contain"
+                    />
 
-                  {/* Center the title */}
-                  <div className="text-center text-base font-medium rag-image-title">
-                    {matchImage.title}
+                    {/* Center the title */}
+                    <div className="text-center text-base font-medium rag-image-title">
+                      {matchImage.title}
+                    </div>
                   </div>
-                </div>
-              );
+                );
+              }
             }
             return <p className={className} style={{ margin: '0.5em 0' }}>
               {children}
