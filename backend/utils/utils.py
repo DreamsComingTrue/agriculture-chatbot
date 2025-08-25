@@ -120,6 +120,19 @@ def should_use_mcp_plugin(user_input: str) -> bool:
     lower_input = user_input.lower()
     return any(keyword.lower() in lower_input for keyword in MCP_TRIGGER_KEYWORDS)
 
+def get_tables_by_keys(user_input: str, data_list, schema_list):
+    lower_input = user_input.lower()
+    for item in data_list:
+        if item["key"] in lower_input:
+            tables = []
+            for table in item["tables"]:
+                table_name = table.get("name")
+                schema = json.loads(json.dumps(schema_list.get(table_name)))  # Get a copy to avoid modifying original
+                schema["name"] = table_name  # Add the name to the schema
+                tables.append(schema)
+            return tables
+    return None
+
 
 def should_apply_enhanced_prompt(user_input: str) -> bool:
     """

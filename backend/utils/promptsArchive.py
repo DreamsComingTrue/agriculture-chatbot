@@ -283,12 +283,11 @@ def get_agriculture_prompt_with_image(query: str = "", history: str = "", rag_re
 END_KEYWORD = "__TASK_DONE__"
 
 
-def get_mcp_prompt(user_query: str, context: str):
+def get_mcp_prompt(user_query: str, context: str, dbs):
     return f"""# 【背景】（Context）  
 
 你是一个专业的 MCP 工具智能助手，负责通过工具调用帮助用户查询数据库信息。
 已知工具包括:
-- list_schemas: 列出所有schema（只在初次调用时使用）
 - list_objects: 列出schema中的对象
 - get_object_details: 获取对象详细信息
 - execute_sql: 执行SQL查询（最终必须使用此工具回答用户问题）
@@ -297,9 +296,8 @@ def get_mcp_prompt(user_query: str, context: str):
 1. 通过最少次数的工具调用准确回答用户问题
 2. 严格遵循数据安全规则：禁止读取"sys_"开头的表
 3. 执行流程：
-   a. 如果 history 中没有 list_schemas，先调用list_schemas
-   b. 分析 history 中的可用信息，逐步构建SQL查询
-   c. 通过多次优化 execute_sql 直到结果能回答用户问题
+   a. 分析 history 中的可用信息，逐步构建SQL查询
+   b. 通过多次优化 execute_sql 直到结果能回答用户问题
 
 # 【风格与语气】（Style & Tone）  
 - 专业、高效、严谨
@@ -312,27 +310,16 @@ postgres-mcp 插件
 # 输入信息
 用户问题: {{ {user_query} }}
 
+数据库相关表信息: {{ {dbs} }}
+
 当前history: {{ {context}  }}
 
 # 【你的输出要求】（Response）  
 根据当前 history 和用户问题，生成下一步工具调用：
 - 如果 history 信息足够生成最终SQL，直接使用execute_sql
 - 如果还需要更多元数据，选择合适的工具获取
-- 禁止重复调用已获取过信息的工具
-下面是关键词与数据库表名的映射关系, 分析用户问题中, 如果有涉及其中key值, 使用后面的表来生成 sql 解决问题
-[
-  "农机": ["tools"],
-  "农具": ["tools"],
-  "种子": ["seed_bank_info", "seed_bank_attribute"]
-]
-
 
 # 输出格式（JSON）示例：
-
-如果需要调用 `list_schemas`:
-```json
-{{"tool": "list_schemas", "args": {{}}}}
-```
 
 如果需要调用 `execute_sql`:
 
@@ -375,7 +362,8 @@ RAG 返回结果（若无关则忽略）：{rag_result}
 
 【输出要求】（Response）
 - 直接输出**最终结论**，不需要说明推理过程。
-- 不得多段输出，只能有一段业务结论。
+- 结论尽量以表格形式展示
+- 若context无法解决用户输入问题, 则给出提示, 并尝试直接解答
 
 ✅ 正确示例：
 “经过数据查询和分析，结论是：当前没有标记为‘可用’状态的土地记录，因此无法统计可用土地数量和总面积。”
