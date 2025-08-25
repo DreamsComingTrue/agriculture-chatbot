@@ -1,21 +1,24 @@
 from utils.models import generate_with_ollama, generate_with_ollama_stream
 from utils.promptsArchive import (END_KEYWORD, get_mcp_prompt,
                                   get_summary_prompt)
-from utils.utils import clean_message, extract_json
+from utils.utils import clean_message, extract_json, get_tables_by_keys
 
 from .mcp_stream import call_tool_with_stream
+from .fuxi_schemas import fuxi_keywords_table_list, fuxi_schemas
 
 
 async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_result: list[str]):
     context = ""
     times = 1
+    dbs = get_tables_by_keys(user_query, fuxi_keywords_table_list, fuxi_schemas) or fuxi_schemas
+    print("dbs:-------------------------------------", dbs)
+
 
     yield "loading: mcp_begining \n\n"
     while True:
-        prompt = get_mcp_prompt(user_query, context)
+        prompt = get_mcp_prompt(user_query, context, dbs)
         llm_reply = await generate_with_ollama(prompt)
         llm_reply = clean_message(llm_reply["response"])
-        print("tool plan----------------------", llm_reply)
 
         if END_KEYWORD in llm_reply or times == 10:
             if times == 1:
@@ -41,14 +44,13 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_re
 
         try:
             plan = extract_json(llm_reply)
+            print("tool plan----------------------", plan)
             tool = plan["tool"]
             args = plan.get("args", {})
             if times > 1:
                 yield "loading: mcp_another_try \n\n"
 
-            # yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n"
-            # yield f"loading: {getLoadingTextByTool(tool)} \n\n"
-
+            # yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n" yield f"loading: {getLoadingTextByTool(tool)} \n\n"
             async for tool_output in call_tool_with_stream(tool, args):
                 # yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
                 context_list.append(
