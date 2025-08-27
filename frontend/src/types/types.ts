@@ -15,6 +15,7 @@ export interface OllamaRequest {
 
 export type OllamaResponse =
   | { type: 'delta'; token: string; model: string }
+  | { type: 'audio'; data: string; }
   | { type: 'done'; model?: string }
   | { type: 'error'; message: string; model?: string };
 

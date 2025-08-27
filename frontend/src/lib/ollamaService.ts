@@ -61,6 +61,9 @@ export const generateResponse = async (
             case 'delta':
               onData({ type: 'delta', token: parsed.token, model: parsed.model });
               break;
+            case 'audio':
+              onData({ type: 'audio', data: parsed.data });
+              break;
             case 'done':
               onData({ type: 'done', model: parsed.model });
               break;

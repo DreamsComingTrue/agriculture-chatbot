@@ -12,6 +12,7 @@ import { saveUserMessage, saveAIResponse, getPromptVersion } from "@/lib/managem
 import { logError } from "@/lib/logService";
 import { SpeechToText } from "./SpeechToText.tsx"
 import { CleanContextBtn } from "./CleanContextBtn.tsx";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer.ts";
 
 
 interface ChatInterfaceProps {
@@ -36,6 +37,7 @@ export const ChatInterface = ({
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
   const default_chat_id = useMemo(() => `chat_${Date.now()}`, [])
+  const { addToAudioQueue } = useAudioPlayer()
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -115,9 +117,9 @@ export const ChatInterface = ({
               };
               return updated;
             });
-          }
-          // Check if response is complete and we have images
-          if (data.type == "done" && userMessage.images) {
+          } else if (data.type === "audio") {
+            addToAudioQueue(data.data)
+          } else if (data.type == "done" && userMessage.images) {
             setShouldResetImages(true);
             setTargetDB("");
           }

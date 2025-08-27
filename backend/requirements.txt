@@ -1,6 +1,7 @@
 aiomysql
 asyncio
 httpx
+websocket-client==1.6.4
 
 fastapi
 fastmcp
