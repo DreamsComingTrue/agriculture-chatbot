@@ -37,7 +37,7 @@ export const ChatInterface = ({
   const savedMessagesRef = useRef<Set<string>>(new Set());
   const [targetDB, setTargetDB] = useState("");
   const default_chat_id = useMemo(() => `chat_${Date.now()}`, [])
-  const { addToAudioQueue } = useAudioPlayer()
+  const { addToAudioQueue, flushBuffer, clearQueue } = useAudioPlayer()
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -56,6 +56,9 @@ export const ChatInterface = ({
     if (!inputRef.current) return;
     const input = inputRef.current.value;
     if (!input.trim()) return;
+
+    // 强制清空缓存区所有音频
+    clearQueue();
 
     const userMessage: Message = {
       text: input,
@@ -117,8 +120,7 @@ export const ChatInterface = ({
               };
               return updated;
             });
-          } else if (data.type === "audio") {
-            addToAudioQueue(data.data)
+            addToAudioQueue(data.token)
           } else if (data.type == "done" && userMessage.images) {
             setShouldResetImages(true);
             setTargetDB("");
@@ -137,6 +139,8 @@ export const ChatInterface = ({
         },
         abortControllerRef.current?.signal
       );
+
+      flushBuffer(); // 强制清空缓存区所有音频
 
       // Mark as complete and save AI response
       setMessages(prev => {

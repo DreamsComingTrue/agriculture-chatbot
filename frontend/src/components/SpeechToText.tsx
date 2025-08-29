@@ -31,9 +31,9 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   const recorderRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const APP_ID = "806aaf39";
-  const API_KEY = "ab5148b8b6d4a0b3440b028651f163d9";
-  const API_SECRET = "MDI5NjMxYzAyM2RhN2E2YTk2MjMyNzQx";
+  const APP_ID = import.meta.env.VITE_XUNFEI_ID;
+  const API_KEY = import.meta.env.VITE_XUNFEI_KEY;
+  const API_SECRET = import.meta.env.VITE_XUNFEI_SECRET;
 
   // 生成 iFlyTek WebSocket URL（鉴权签名机制）
   const createUrl = () => {
