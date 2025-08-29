@@ -1,9 +1,6 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from typing import Optional
-import base64
-import json
 
 import httpx
 import uvicorn
@@ -20,7 +17,6 @@ from utils.user_memory import UserMemoryManager
 from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
                          should_use_mcp_plugin)
 from rag.rag import retrieveRAGResult
-from xunfei.xunfei_tts import XunfeiTTS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,13 +36,6 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
-# 初始化真实讯飞TTS
-xunfei_tts = XunfeiTTS(
-    appid='806aaf39',
-    apisecret='MDI5NjMxYzAyM2RhN2E2YTk2MjMyNzQx',
-    apikey='ab5148b8b6d4a0b3440b028651f163d9'
 )
 
 # Force GPU usage
@@ -145,10 +134,6 @@ async def analyze(request: Request):
 
             filtered_rag_result = [res for res in rag_result if not res.get("image")]
 
-            # 语音转换 buffer
-            text_buffer = ""
-            sentence_endings = {'.', '!', '?', '。', '！', '？'}
-
             try:
                 prompt = user_prompt
                 # Create the prompt based on model
@@ -208,25 +193,7 @@ async def analyze(request: Request):
                     if idx == -1 and not inside_think:
                         print("token-------------", token)
                         full_response += token
-                        text_buffer += token
                         yield generate_sse_data(token)
-
-                        # 当积累足够文本或遇到句子结束时合成语音
-                        # if len(text_buffer) >= 50 or any(text_buffer.endswith(punc) for punc in sentence_endings):
-                        if len(text_buffer) >= 50:
-                            if text_buffer.strip():
-                                # 使用真实讯飞TTS合成语音
-                                async for audio_chunk in xunfei_tts.synthesize_speech(text_buffer):
-                                    if audio_chunk:
-                                        audio_base64 = base64.b64encode(audio_chunk).decode('utf-8')
-                                        yield f"data: {json.dumps({'type': 'audio', 'data': audio_base64})}\n\n"
-                                text_buffer = ""
-
-                if text_buffer.strip():
-                    async for audio_chunk in xunfei_tts.synthesize_speech(text_buffer):
-                        if audio_chunk:
-                            audio_base64 = base64.b64encode(audio_chunk).decode('utf-8')
-                            yield f"data: {json.dumps({'type': 'audio', 'data': audio_base64})}\n\n"
 
             except Exception as e:
                 # 🆕 记录错误日志到管理后台

@@ -20,7 +20,7 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_re
         llm_reply = await generate_with_ollama(prompt)
         llm_reply = clean_message(llm_reply["response"])
 
-        if END_KEYWORD in llm_reply or times == 10:
+        if END_KEYWORD in llm_reply or times == 5:
             if times == 1:
                 yield "loading: mcp_ending_not_match \n\n"
                 break
