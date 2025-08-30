@@ -1,6 +1,6 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { synthesizeSpeech } from '@/lib/xunfeiTTS'
-import { toByteArray } from 'base64-js';
+import { toByteArray } from 'base64-js'
 
 interface AudioTask {
   id: number
@@ -13,31 +13,57 @@ interface AudioTask {
 export const useAudioPlayer = () => {
   const bufferRef = useRef<string[]>([])
   const taskQueueRef = useRef<AudioTask[]>([])
+  const playQueueRef = useRef<AudioTask[]>([]) // 新增：播放队列
   const isProcessingRef = useRef(false)
+  const isPlayingRef = useRef(false) // 新增：播放状态
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const nextTaskIdRef = useRef(0)
-  const activeTaskIdRef = useRef<number | null>(null)
+  const maxConcurrentSynthesis = useRef(3)
+  const activeSynthesisCount = useRef(0)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const playPollIntervalRef = useRef<NodeJS.Timeout | null>(null) // 新增：播放轮询
+
+  // 组件卸载时清理所有轮询
+  useEffect(() => {
+    return () => {
+      stopPolling();
+      stopPlayPolling();
+    }
+  }, [])
+
+  // 停止合成轮询
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    isProcessingRef.current = false;
+  }, []);
+
+  // 停止播放轮询
+  const stopPlayPolling = useCallback(() => {
+    if (playPollIntervalRef.current) {
+      clearInterval(playPollIntervalRef.current);
+      playPollIntervalRef.current = null;
+    }
+    isPlayingRef.current = false;
+  }, []);
 
   // 检查文本是否匹配忽略规则
   const shouldIgnoreText = (text: string): boolean => {
-    // 定义需要忽略的正则规则
     const ignorePatterns = [
-      // 1. 匹配 "RAG image: 任意内容 \n\n"
       /^RAG image:.*?\n\n$/,
-      // 2. 匹配 "loading: 任意内容 \n\n"  
       /^loading:.*?\n\n$/
     ];
-
-    // 检查文本是否完全匹配任一模式
     return ignorePatterns.some(pattern => pattern.test(text));
   };
+
   // 添加片段到缓冲区
   const addToAudioQueue = useCallback((str: string) => {
     if (shouldIgnoreText(str)) return;
     bufferRef.current.push(str)
 
-    // 如果达到15段或遇到句子结束标点，立即合成
-    if (bufferRef.current.length >= 50) {
+    if (/[.!?。！？]$/.test(str)) {
       flushBuffer()
     }
   }, [])
@@ -45,15 +71,9 @@ export const useAudioPlayer = () => {
   // 修复的 Base64 转 Blob 函数
   const base64ToBlob = (base64: string, mimeType: string = 'audio/mp3'): Blob => {
     try {
-      // 移除可能的 data URI 前缀
       const base64Data = base64.replace(/^data:[^;]+;base64,/, '');
-
-      // 移除所有非 Base64 字符（如空格、换行等）
       const cleanBase64 = base64Data.replace(/[^A-Za-z0-9+/=]/g, '');
-
-      // 使用 base64-js 解码
       const byteArray = toByteArray(cleanBase64);
-
       return new Blob([byteArray], { type: mimeType });
     } catch (error) {
       console.error('Base64 转换失败:', error);
@@ -63,13 +83,11 @@ export const useAudioPlayer = () => {
 
   // 验证 Base64 字符串是否完整
   const validateBase64 = (base64: string): boolean => {
-    // Base64 字符串长度应该是 4 的倍数
     if (base64.length % 4 !== 0) {
       console.warn('Base64 字符串长度不是 4 的倍数，可能不完整');
       return false;
     }
 
-    // 检查是否包含非法字符
     if (/[^A-Za-z0-9+/=]/.test(base64)) {
       console.warn('Base64 字符串包含非法字符');
       return false;
@@ -82,10 +100,8 @@ export const useAudioPlayer = () => {
   const playAudio = useCallback(async (base64Buffer: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
-        // 验证 Base64 数据
         if (!validateBase64(base64Buffer)) {
           console.warn('Base64 数据可能不完整，尝试修复...');
-          // 尝试修复 Base64 字符串
           base64Buffer = fixBase64Padding(base64Buffer);
         }
 
@@ -95,7 +111,6 @@ export const useAudioPlayer = () => {
         const audio = new Audio(audioUrl);
         currentAudioRef.current = audio;
 
-        // 添加详细的事件监听
         audio.onloadedmetadata = () => {
           console.log('音频时长:', audio.duration, '秒');
         };
@@ -107,6 +122,7 @@ export const useAudioPlayer = () => {
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
           currentAudioRef.current = null;
+          isPlayingRef.current = false;
           resolve();
         };
 
@@ -114,26 +130,30 @@ export const useAudioPlayer = () => {
           console.error('音频播放错误:', error);
           URL.revokeObjectURL(audioUrl);
           currentAudioRef.current = null;
+          isPlayingRef.current = false;
           reject(error);
         };
 
-        // 设置超时
         const timeoutId = setTimeout(() => {
           console.warn('音频加载超时');
           audio.pause();
           URL.revokeObjectURL(audioUrl);
+          isPlayingRef.current = false;
           reject(new Error('音频加载超时'));
         }, 10000);
 
         audio.oncanplay = () => {
           clearTimeout(timeoutId);
+          isPlayingRef.current = true;
           audio.play().catch((err) => {
             console.error('播放失败:', err);
+            isPlayingRef.current = false;
             reject(err);
           });
         };
 
       } catch (error) {
+        isPlayingRef.current = false;
         reject(error);
       }
     });
@@ -141,127 +161,210 @@ export const useAudioPlayer = () => {
 
   // 修复 Base64 填充
   const fixBase64Padding = (base64: string): string => {
-    // 移除所有非 Base64 字符
     let cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
-
-    // 确保长度是 4 的倍数
     while (cleanBase64.length % 4 !== 0) {
       cleanBase64 += '=';
     }
-
     return cleanBase64;
   };
 
-  // 处理任务队列
-  const processTaskQueue = useCallback(async () => {
-    if (isProcessingRef.current || taskQueueRef.current.length === 0) return
+  // 启动轮询处理任务队列
+  const startPolling = useCallback(() => {
+    if (isProcessingRef.current || taskQueueRef.current.length === 0) return;
 
-    isProcessingRef.current = true
+    isProcessingRef.current = true;
 
-    try {
-      // 找到第一个待处理的任务
-      const nextTaskIndex = taskQueueRef.current.findIndex(
-        task => task.status === 'pending' || task.status === 'ready'
-      )
+    // 清除现有的轮询（如果有）
+    stopPolling();
 
-      if (nextTaskIndex === -1) {
-        isProcessingRef.current = false
-        return
+    // 设置新的轮询
+    pollIntervalRef.current = setInterval(async () => {
+      // 检查任务队列是否为空
+      if (taskQueueRef.current.length === 0) {
+        stopPolling();
+        return;
       }
-
-      const task = taskQueueRef.current[nextTaskIndex]
-      activeTaskIdRef.current = task.id
 
       try {
-        // 如果任务需要合成，先合成
-        if (task.status === 'pending') {
-          task.status = 'synthesizing'
-          task.audioData = await synthesizeSpeech(task.text)
-          task.status = 'ready'
+        // 找出所有待处理的任务
+        const pendingTasks = taskQueueRef.current.filter(
+          task => task.status === 'pending'
+        );
+
+        // 如果没有待处理任务，检查是否还有正在合成的任务
+        if (pendingTasks.length === 0) {
+          const synthesizingTasks = taskQueueRef.current.filter(
+            task => task.status === 'synthesizing'
+          );
+
+          // 如果没有正在合成的任务，停止轮询
+          if (synthesizingTasks.length === 0) {
+            stopPolling();
+            return;
+          }
+
+          // 还有任务正在合成，继续等待
+          return;
         }
 
-        // 播放音频
-        if (task.status === 'ready') {
-          task.status = 'playing'
-          await playAudio(task.audioData!)
-          task.status = 'completed'
+        // 计算可以启动的新任务数量
+        const availableSlots = maxConcurrentSynthesis.current - activeSynthesisCount.current;
+        const tasksToProcess = pendingTasks.slice(0, Math.max(0, availableSlots));
+
+        if (tasksToProcess.length === 0) {
+          // 没有可用槽位，继续等待
+          return;
         }
 
-        // 从队列中移除已完成的任务
-        taskQueueRef.current = taskQueueRef.current.filter(t => t.id !== task.id)
+        // 并行处理合成任务
+        await Promise.allSettled(
+          tasksToProcess.map(async (task) => {
+            try {
+              activeSynthesisCount.current++;
+              task.status = 'synthesizing';
+              task.audioData = await synthesizeSpeech(task.text);
+              task.status = 'ready';
+
+              // 合成完成后，将任务添加到播放队列（按ID顺序插入）
+              const index = playQueueRef.current.findIndex(t => t.id > task.id);
+              if (index === -1) {
+                playQueueRef.current.push(task);
+              } else {
+                playQueueRef.current.splice(index, 0, task);
+              }
+
+              // 启动播放轮询
+              startPlayPolling();
+            } catch (error) {
+              console.error('处理音频任务失败:', error);
+              task.status = 'error';
+            } finally {
+              activeSynthesisCount.current--;
+            }
+          })
+        );
       } catch (error) {
-        console.error('处理音频任务失败:', error)
-        task.status = 'error'
-        // 不立即移除错误任务，允许重试或其他处理
+        console.error('处理任务队列时出错:', error);
+        stopPolling();
       }
-    } finally {
-      activeTaskIdRef.current = null
-      isProcessingRef.current = false
+    }, 100); // 每100毫秒检查一次
+  }, []);
 
-      // 检查是否有更多任务需要处理
-      if (taskQueueRef.current.length > 0) {
-        // 使用 setTimeout 避免递归调用栈溢出
-        setTimeout(() => processTaskQueue(), 0)
+  // 启动播放轮询
+  const startPlayPolling = useCallback(() => {
+    if (isPlayingRef.current || playQueueRef.current.length === 0) return;
+
+    // 清除现有的播放轮询（如果有）
+    stopPlayPolling();
+
+    // 设置新的播放轮询
+    playPollIntervalRef.current = setInterval(async () => {
+      // 检查播放队列是否为空
+      if (playQueueRef.current.length === 0) {
+        stopPlayPolling();
+        return;
       }
-    }
-  }, [playAudio])
+
+      // 如果当前正在播放，等待下一次轮询
+      if (isPlayingRef.current) {
+        return;
+      }
+
+      // 获取播放队列中的第一个任务（按ID顺序）
+      const nextTask = playQueueRef.current[0];
+
+      try {
+        console.log(`开始播放任务 ${nextTask.id}`);
+        await playAudio(nextTask.audioData!);
+
+        // 播放完成后，从播放队列中移除
+        playQueueRef.current.shift();
+
+        // 从任务队列中移除已完成的任务
+        taskQueueRef.current = taskQueueRef.current.filter(t => t.id !== nextTask.id);
+
+        // 如果播放队列为空，停止播放轮询
+        if (playQueueRef.current.length === 0) {
+          stopPlayPolling();
+        }
+      } catch (error) {
+        console.error('播放音频失败:', error);
+        // 即使播放失败，也从播放队列中移除
+        playQueueRef.current.shift();
+
+        // 如果播放队列为空，停止播放轮询
+        if (playQueueRef.current.length === 0) {
+          stopPlayPolling();
+        }
+      }
+    }, 100); // 每100毫秒检查一次
+  }, [playAudio]);
 
   // 合并缓冲区内容并添加到任务队列
   const flushBuffer = useCallback(() => {
-    if (bufferRef.current.length === 0) return
+    if (bufferRef.current.length === 0) return;
 
-    const fullText = bufferRef.current.join('')
-    console.log('合成文本:', fullText)
-    bufferRef.current = []
+    const fullText = bufferRef.current.join('');
+    console.log('合成文本:', fullText);
+    bufferRef.current = [];
 
     // 创建新任务并添加到队列
-    const taskId = nextTaskIdRef.current++
+    const taskId = nextTaskIdRef.current++;
     taskQueueRef.current.push({
       id: taskId,
       text: fullText,
       timestamp: Date.now(),
       status: 'pending'
-    })
+    });
 
-    // 处理任务队列
-    processTaskQueue()
-  }, [processTaskQueue])
+    // 启动轮询处理
+    startPolling();
+  }, [startPolling]);
 
   // 停止当前播放
   const stopPlayback = useCallback(() => {
     if (currentAudioRef.current) {
-      currentAudioRef.current.pause()
-      currentAudioRef.current = null
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
     }
-    isProcessingRef.current = false
-  }, [])
+    isPlayingRef.current = false;
+    stopPolling();
+    stopPlayPolling();
+  }, [stopPolling, stopPlayPolling]);
 
   // 清空队列
   const clearQueue = useCallback(() => {
-    taskQueueRef.current = []
-    bufferRef.current = []
-    stopPlayback()
-  }, [stopPlayback])
+    taskQueueRef.current = [];
+    playQueueRef.current = [];
+    bufferRef.current = [];
+    stopPlayback();
+  }, [stopPlayback]);
 
   // 重试失败的任务
   const retryFailedTasks = useCallback(() => {
     taskQueueRef.current.forEach(task => {
       if (task.status === 'error') {
-        task.status = 'pending'
+        task.status = 'pending';
       }
-    })
-    processTaskQueue()
-  }, [processTaskQueue])
+    });
 
-  // 获取队列状态（用于调试或显示）
+    // 启动轮询处理
+    startPolling();
+  }, [startPolling]);
+
+  // 获取队列状态
   const getQueueStatus = useCallback(() => {
     return {
       bufferLength: bufferRef.current.length,
       taskQueue: [...taskQueueRef.current],
+      playQueue: [...playQueueRef.current],
       isProcessing: isProcessingRef.current,
-      activeTaskId: activeTaskIdRef.current
-    }
-  }, [])
+      isPlaying: isPlayingRef.current,
+      activeSynthesisCount: activeSynthesisCount.current,
+      isPolling: pollIntervalRef.current !== null,
+      isPlayPolling: playPollIntervalRef.current !== null
+    };
+  }, []);
 
   return {
     addToAudioQueue,
@@ -270,5 +373,5 @@ export const useAudioPlayer = () => {
     clearQueue,
     retryFailedTasks,
     getQueueStatus
-  }
-}
+  };
+};

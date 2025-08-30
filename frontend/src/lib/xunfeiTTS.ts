@@ -97,8 +97,6 @@ function sendTtsRequest(ws: WebSocket, appid: string, text: string, ttsConfig: X
 // 移除 Data URL 头
 const stripDataUrlHeader = (data: string): string => {
   if (typeof data !== 'string') return data;
-
-  // 移除 data:audio/mp3;base64, 或类似的头
   return data.replace(/^data:[^;]+;base64,/, '');
 };
 
@@ -249,7 +247,6 @@ export async function synthesizeSpeech(
         ws.close();
         reject(new Error('TTS请求超时'));
       }
-    }, 30000); // 30秒超时
+    }, 30000);
   });
 }
-
