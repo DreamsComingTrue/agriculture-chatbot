@@ -8,11 +8,12 @@ from env import SERVER_INFO
 async def generate_with_ollama(
     prompt,
     model="qwen3:32b",
+    image=[],
     host=SERVER_INFO["host"],
     port=SERVER_INFO["port"],
 ):
     url = f"http://{host}:{port}/api/generate"
-    payload = {"model": model, "prompt": prompt, "stream": False}
+    payload = {"model": model, "prompt": prompt, "images": image, "stream": False}
 
     try:
         async with httpx.AsyncClient(timeout=None) as client:

@@ -56,6 +56,15 @@ export const LoadingCmp: FC<{ content: string }> = (prop) => {
       case "mcp_ending_summarize":
         text = "尝试结束, 小羲正在汇总全部信息为您解答, 请稍后..."
         break
+      case "rag_analyzing":
+        text = "请稍后, 小羲正在分析用户输入..."
+        break
+      case "rag_no_relation":
+        text = "用户输入分析完毕, 正在努力为您解答中..."
+        break
+      case "rag_searching":
+        text = "正在为您搜索相关资料中, 请稍后..."
+        break
       default:
         break
     }

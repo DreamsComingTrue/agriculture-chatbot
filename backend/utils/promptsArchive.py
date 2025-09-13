@@ -373,3 +373,32 @@ RAG 返回结果（若无关则忽略）：{rag_result}
 
 请直接给出符合要求的最终结论：/no_think
 """
+
+NO_RELATION = "__NO_RELATION__"
+def get_rag_analysis_prompt(user_query: str):
+    return f"""# 【背景】（Context）  
+
+你是一个专业的对话机器人, 根据用户输入, 判断是否与以下主题有关.
+1. 害虫
+2. 病害
+3. 玉米
+4. 杂草
+
+# 【目标】（Objective）  
+1. 如果用户输入无图片, 则只分析用户问题是否与主题有关
+2. 如果用户输入有图片, 则结合问题与图片, 一起判断是否与主题有关
+
+# 【风格与语气】（Style & Tone）  
+- 精简, 直接返回 yes / no
+
+# 输入信息
+用户问题: {{ {user_query} }}
+
+# 【你的输出要求】（Response）  
+如果用户输入的问题和图片与主题有关, 则返回:
+yes
+
+如果无关, 则返回:
+{NO_RELATION}
+"""
+

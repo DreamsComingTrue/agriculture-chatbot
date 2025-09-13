@@ -16,7 +16,7 @@ from utils.promptsArchive import (get_agriculture_prompt_with_image,
 from utils.user_memory import UserMemoryManager
 from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
                          should_use_mcp_plugin)
-from rag.rag import retrieveRAGResult
+from rag.rag import run_rag_analyzing, retrieveRAGResult
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -114,12 +114,19 @@ async def analyze(request: Request):
             llm = "deepseek-r1:8b"
             memory = user_memory_manager.get_memory(chat_id, llm)
 
-            rag_result = None
-            # Retrieve RAG first
-            if images:
-                rag_result = await retrieveRAGResult(image=images[0])
-            else:
-                rag_result = await retrieveRAGResult(text=user_prompt)
+            rag_result = []
+            async for chunk in run_rag_analyzing(
+                text=user_prompt,
+                images=images,
+            ):
+                yield generate_sse_data(chunk)
+                if chunk == "loading: rag_searching \n\n":
+                    print("使用 RAG 搜索")
+                    # Retrieve RAG first
+                    if images:
+                        rag_result = await retrieveRAGResult(image=images[0])
+                    else:
+                        rag_result = await retrieveRAGResult(text=user_prompt)
 
             rag_imgs = []
             if rag_result:
