@@ -252,9 +252,9 @@ export const ChatInterface = ({
   }, [])
 
   return (
-    <div className="w-screen mx-auto bg-[#1a1a1a] min-h-screen">
+    <div className="w-screen bg-[#1a1a1a] min-h-screen flex items-center justify-center">
       <div
-        className="relative w-full h-[100vh] sm:h-[747px] mx-auto flex flex-col"
+        className="relative w-full h-[100vh] sm:h-[747px] flex flex-col max-w-[680px]"
         style={{
           backgroundImage: `url(${chatBg})`,
           backgroundSize: "100% 100%",
@@ -269,7 +269,7 @@ export const ChatInterface = ({
         <div className="w-full h-[45px] flex items-center justify-between px-8 flex-shrink-0">
           <span className="chat-title">AI智能决策</span>
         </div>
-        <div className="flex-1 overflow-y-auto px-4 mx-2">
+        <div className="flex-1 overflow-y-auto px-4 py-2 mx-2">
           <div className="flex items-start gap-3 text-gray-400">
             <img src={botAvatar} className="w-10 h-10" alt="AI" />
             <div
