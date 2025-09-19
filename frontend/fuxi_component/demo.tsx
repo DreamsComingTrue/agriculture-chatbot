@@ -1,5 +1,4 @@
 import React, { StrictMode, useEffect, useRef } from 'react';
-// import { IframeAgent } from 'iframe-agent';
 import { IframeAgent } from './IframeAgent';
 import { createRoot } from 'react-dom/client';
 

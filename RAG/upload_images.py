@@ -5,7 +5,7 @@ folder_path = "./images"
 url = "http://localhost:8100/embed"
 
 for file in os.listdir(folder_path):
-    if file.lower().endswith((".jpg", ".png", ".jpeg")):
+    if file.lower().endswith((".jpg", ".png", ".jpeg", ".webg")):
         file_path = os.path.join(folder_path, file)
         text_description = os.path.splitext(file)[0].strip()
 

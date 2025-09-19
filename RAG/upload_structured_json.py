@@ -11,15 +11,13 @@ def load_structured_json(filepath):
 
     docs = []
 
-    for item in data.get("pests",[]) :
-        docs.append((item['title'],item['content']))
-    if "weed" in data:
-        weed=data["weed"]
-        docs.append((weed['title'],weed['content']))
+    for item in data :
+        if 'title' in item and 'content' in item:
+            docs.append((item['title'],item['content']))
     return docs
 
 def main():
-    filepath = "structured_data.json"
+    filepath = "rag_text.json"
 
     embedder = BgeEmbedder()
 
