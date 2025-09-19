@@ -383,6 +383,7 @@ def get_rag_analysis_prompt(user_query: str):
 2. 病害
 3. 玉米
 4. 杂草
+5. 水稻
 
 # 【目标】（Objective）  
 1. 如果用户输入无图片, 则只分析用户问题是否与主题有关

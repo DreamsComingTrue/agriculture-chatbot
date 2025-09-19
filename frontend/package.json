@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:iframe": "vite build --config ./vite.fuxi.config.ts",
-    "dev:iframe": "vite serve ./fuxi_component --config ./vite.demo.config.ts"
+    "dev:iframe": "vite serve ./fuxi_component --config ./vite.demo.config.ts",
+    "dev:rag": "vite serve ./rag_uploader --config ./vite.rag.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",

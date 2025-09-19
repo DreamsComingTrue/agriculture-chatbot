@@ -20,7 +20,7 @@ export class IframeAgent {
     this.options = {
       width: 350,
       height: 500,
-      iframeUrl: `http://${window.location.hostname}:5173`,
+      iframeUrl: `http://${window.location.hostname}:4173`,
       robotIconUrl: 'https://example.com/robot-icon.png',
       ...options
     };

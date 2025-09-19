@@ -4,6 +4,7 @@ from uuid import uuid4
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from pipeline import (COLLECTION_NAME, CLIPEmbedder,
                     BgeEmbedder, client)
@@ -18,8 +19,16 @@ import re
 from pydantic import BaseModel
 from pathlib import Path
 
-
 app = FastAPI()
+# 允许所有来源的CORS（跨域请求）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许所有来源
+    allow_credentials=True,
+    allow_methods=["*"],  # 允许所有HTTP方法
+    allow_headers=["*"],  # 允许所有HTTP头
+)
+
 text_embedder = BgeEmbedder()
 
 image_embedder = CLIPEmbedder()
