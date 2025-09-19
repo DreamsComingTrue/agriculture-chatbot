@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 images/
 uploaded_images/
+qdrant_data/*
 test_json.py
 *.key
 *.pem
