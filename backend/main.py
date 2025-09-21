@@ -2,12 +2,17 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 
+from utils.load_config import load_config
+
+# Load all global configs
+load_config()
+
 import httpx
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from mcp_plugins.mcp_stream import CLIENT
+from mcp_plugins.mcp_stream import get_mcp_client
 from mcp_plugins.postgres_mcp import run_postgres_mcp_tool
 from utils.memory import WindowedSummaryMemory
 from utils.models import generate_with_ollama_stream
@@ -20,8 +25,9 @@ from rag.rag import run_rag_analyzing, retrieveRAGResult
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    mcp_client = get_mcp_client()
     # 异步上下文管理客户端连接
-    async with CLIENT as client:
+    async with mcp_client as client:
         # 初始化连接
         await client.ping()
         yield
@@ -43,7 +49,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Initialize memory manager
 user_memory_manager = UserMemoryManager()
-
 
 # 日志工具函数
 async def log_to_management(level: str, message: str, **kwargs):

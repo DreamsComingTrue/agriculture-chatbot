@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from langchain_core.memory import BaseMemory
 from pydantic import Field, PrivateAttr
 
-
 class WindowedSummaryMemory(BaseMemory):
     max_window: int = Field(default=10)
     memory_key: str = Field(default="history")

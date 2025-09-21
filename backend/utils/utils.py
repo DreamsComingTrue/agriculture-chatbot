@@ -1,6 +1,6 @@
 import json
 import re
-
+from .load_config import global_config
 
 def clean_message(message):
     # 移除 <think> 和 </think> 标签及其间的内容
@@ -37,76 +37,6 @@ def generate_sse_data(str, type="delta"):
         data = {"type": type, "message": str}
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"  # SSE格式要求每行以\n结束，消息以\n\n分隔
 
-
-# MCP 工具触发关键词
-MCP_TRIGGER_KEYWORDS = [
-    # ================= 系统关键词 ===================
-    "伏羲",
-    "伽马",
-    # ================= 基本地块信息 =================
-    "地块数量",
-    "地块详情",
-    "地块编码",
-    "地块归属",
-    "地块类型",
-    "地块面积",
-    "高标准农田",
-    "农田总面积",
-    # ================= 土壤与环境分析 =================
-    "土壤温度",
-    "氮含量",
-    "磷含量",
-    "钾含量",
-    "有机碳含量",
-    "墒情",
-    "碱解氮",
-    "速效钾",
-    "缓效钾",
-    "全氮",
-    "全钾",
-    "土壤PH",
-    "有效磷",
-    "有效钾",
-    "历史积温分析",
-    "历史平均温度分析",
-    "历史平均降水量分析",
-    "历史平均风速分析",
-    "月平均温度分析",
-    "月平均降水量分析",
-    "月平均风速分析",
-    # ================= 作物种植与管理 =================
-    "种子库",
-    "播种时间",
-    "预计生长时间",
-    "预计成熟时间",
-    # ================= 决策与报告 =================
-    "处方图",
-    # ================= 农机效率与成本 =================
-    "农机",
-    "整机功率",
-    "最大牵引力",
-    "翻地效率",
-    "动力成本",
-    # ================= 伽马土壤检测 =================
-    "耕地总面积",
-    "面积进度",
-    "已检测面积",
-    "未检测面积",
-    "地块进度",
-    "已检测数量",
-    "未检测数量",
-]
-
-PROMPT_TRIGGER_KEYWORDS = [
-    "河北",
-    "种植",
-    "畜牧",
-    "虫害",
-    "害虫",
-    "防治",
-]
-
-
 def should_use_mcp_plugin(user_input: str) -> bool:
     """
     判断用户输入是否需要启用 MCP 插件
@@ -118,7 +48,7 @@ def should_use_mcp_plugin(user_input: str) -> bool:
         bool - 是否触发 MCP 工具
     """
     lower_input = user_input.lower()
-    return any(keyword.lower() in lower_input for keyword in MCP_TRIGGER_KEYWORDS)
+    return any(keyword.lower() in lower_input for keyword in global_config.MCP_TRIGGER_KEYWORDS)
 
 def get_tables_by_keys(user_input: str, data_list, schema_list):
     lower_input = user_input.lower()
@@ -139,4 +69,4 @@ def should_apply_enhanced_prompt(user_input: str) -> bool:
     判断用户输入是否需要使用增强的 prompt
     """
     lower_input = user_input.lower()
-    return any(keyword.lower() in lower_input for keyword in PROMPT_TRIGGER_KEYWORDS)
+    return any(keyword.lower() in lower_input for keyword in global_config.PROMPT_TRIGGER_KEYWORDS)

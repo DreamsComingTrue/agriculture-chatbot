@@ -1,4 +1,5 @@
 import { createPopper } from '@popperjs/core/lib/popper-lite';
+import { Placement } from '@popperjs/core/lib/enums';
 import type { Instance } from '@popperjs/core/lib/types';
 
 export interface IframeAgentOptions {
@@ -6,6 +7,8 @@ export interface IframeAgentOptions {
   robotIconUrl?: string;
   width?: number;
   height?: number;
+  container?: HTMLElement | string; // Add container option
+  placement?: Placement;
 }
 
 export class IframeAgent {
@@ -15,6 +18,7 @@ export class IframeAgent {
   private toggleBtn: HTMLButtonElement | null = null;
   private isOpen = false;
   private popperInstance: Instance | null = null;
+  private parentElement: HTMLElement = document.body; // Default parent
 
   constructor(options: IframeAgentOptions) {
     this.options = {
@@ -25,14 +29,33 @@ export class IframeAgent {
       ...options
     };
 
+    this.resolveContainerOption()
     this.initContainer();
+  }
+
+  private resolveContainerOption() {
+    if (this.options.container) {
+      if (typeof this.options.container === 'string') {
+        // String selector
+        const element = document.querySelector(this.options.container) as HTMLElement;
+        if (element) {
+          this.parentElement = element;
+        } else {
+          console.warn(`Container selector "${this.options.container}" not found, using document.body`);
+          this.parentElement = document.body;
+        }
+      } else if (this.options.container instanceof HTMLElement) {
+        // HTMLElement instance
+        this.parentElement = this.options.container;
+      }
+    }
   }
 
   private initContainer() {
     // Create mountable container
     this.container = document.createElement('div');
     this.container.className = 'iframe-agent-container';
-    document.body.appendChild(this.container);
+    this.parentElement.appendChild(this.container);
 
     // Create iframe (hidden by default)
     this.iframe = document.createElement('iframe');
@@ -52,7 +75,7 @@ export class IframeAgent {
          display-capture`
     this.iframe.sandbox = "allow-same-origin allow-scripts allow-modals allow-forms"
     this.iframe.referrerPolicy = "strict-origin-when-cross-origin"
-    document.body.appendChild(this.iframe);
+    this.parentElement.appendChild(this.iframe);
 
     // Create toggle button
     this.toggleBtn = document.createElement('button');
@@ -63,9 +86,6 @@ export class IframeAgent {
         <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2zM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5"/>
       </svg>
     `;
-    this.toggleBtn.style.position = 'fixed';
-    this.toggleBtn.style.bottom = '20px';
-    this.toggleBtn.style.right = '20px';
     this.toggleBtn.style.background = 'none';
     this.toggleBtn.style.border = 'none';
     this.toggleBtn.style.cursor = 'pointer';
@@ -76,19 +96,19 @@ export class IframeAgent {
     // Initialize Popper (hidden by default)
     if (this.iframe && this.toggleBtn) {
       this.popperInstance = createPopper(this.toggleBtn, this.iframe, {
-        placement: "top-end",
+        placement: this.options.placement ?? "auto",
         modifiers: [
           {
             name: 'preventOverflow',
             options: {
               boundary: document.body,
-              padding: 10,
+              padding: 50,
             },
           },
           {
             name: 'offset',
             options: {
-              offset: [0, 10],
+              offset: [20, 20],
             },
           },
         ],
@@ -111,6 +131,9 @@ export class IframeAgent {
   public mount(parentElement: HTMLElement = document.body) {
     if (this.container && !parentElement.contains(this.container)) {
       parentElement.appendChild(this.container);
+    }
+    if (this.iframe && !parentElement.contains(this.iframe)) {
+      parentElement.appendChild(this.iframe);
     }
   }
 
