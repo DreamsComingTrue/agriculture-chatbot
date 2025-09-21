@@ -4,7 +4,7 @@ uvicorn
 qdrant-client==1.15.0
 sentence-transformers
 transformers
-numpy<2
+numpy
 torch
 torchvision
 Pillow

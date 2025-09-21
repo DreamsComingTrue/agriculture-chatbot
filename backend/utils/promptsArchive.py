@@ -1,10 +1,9 @@
-from typing import Optional
+from utils.load_config import global_config
 
 """
 农业专家prompt配置模块
 存储所有prompt模板，支持有图片和无图片两种场景
 """
-
 
 def get_agriculture_prompt_without_image(
     history: str = "",
@@ -331,7 +330,6 @@ postgres-mcp 插件
 {END_KEYWORD}
 """
 
-
 def get_summary_prompt(user_query: str, context: str, rag_result):
     return f"""
 你是一个融合农业知识和数据库操作经验的专家。你的任务是阅读以下用户提问与交互记录，并以普通人能够理解的语言，总结整个问题的处理过程以及最终得到的>结论。
@@ -375,15 +373,12 @@ RAG 返回结果（若无关则忽略）：{rag_result}
 """
 
 NO_RELATION = "__NO_RELATION__"
+
 def get_rag_analysis_prompt(user_query: str):
     return f"""# 【背景】（Context）  
 
 你是一个专业的对话机器人, 根据用户输入, 判断是否与以下主题有关.
-1. 害虫
-2. 病害
-3. 玉米
-4. 杂草
-5. 水稻
+{global_config.rag_classification}
 
 # 【目标】（Objective）  
 1. 如果用户输入无图片, 则只分析用户问题是否与主题有关

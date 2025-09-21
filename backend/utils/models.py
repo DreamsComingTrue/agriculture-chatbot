@@ -4,7 +4,6 @@ import re
 import httpx
 from env import SERVER_INFO
 
-
 async def generate_with_ollama(
     prompt,
     model="qwen3:32b",

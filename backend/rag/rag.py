@@ -1,10 +1,11 @@
 import httpx
 from typing import Optional
 from utils.promptsArchive import get_rag_analysis_prompt, NO_RELATION
-from utils.models import generate_with_ollama, generate_with_ollama_stream
-from utils.utils import clean_message, extract_json
+from utils.models import generate_with_ollama
+from utils.utils import clean_message
+from utils.load_config import global_config
 
-API_URL = "http://localhost:8100/search"
+SUB_DOMAIN = "/search"
 
 async def run_rag_analyzing(text: str, images: Optional[str] = None, top_k: int = 3):
     yield "loading: rag_analyzing \n\n"
@@ -29,7 +30,7 @@ async def run_rag_analyzing(text: str, images: Optional[str] = None, top_k: int 
 async def retrieveRAGResult(text: Optional[str] = None, image: Optional[str] = None, top_k: int = 3):
     async with httpx.AsyncClient(timeout=None) as client:
         response = await client.post(
-            API_URL,
+            global_config.rag_url + SUB_DOMAIN,
             json={
                 "text": text,
                 "image_base64": image,

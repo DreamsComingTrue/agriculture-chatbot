@@ -4,13 +4,12 @@ from utils.promptsArchive import (END_KEYWORD, get_mcp_prompt,
 from utils.utils import clean_message, extract_json, get_tables_by_keys
 
 from .mcp_stream import call_tool_with_stream
-from .fuxi_schemas import fuxi_keywords_table_list, fuxi_schemas
-
+from utils.load_config import global_config
 
 async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_result: list[str]):
     context = ""
     times = 1
-    dbs = get_tables_by_keys(user_query, fuxi_keywords_table_list, fuxi_schemas) or fuxi_schemas
+    dbs = get_tables_by_keys(user_query, global_config.fuxi_keywords_table_list, global_config.fuxi_schemas) or global_config.fuxi_schemas
     print("dbs:-------------------------------------", dbs)
 
 

@@ -1,6 +1,5 @@
 from .memory import WindowedSummaryMemory
 
-
 class UserMemoryManager:
     def __init__(self):
         self.user_memories = {}  # {chatID: {model_name: memory_instance}}

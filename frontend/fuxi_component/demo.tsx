@@ -11,7 +11,8 @@ export function Demo() {
       iframeUrl: `http://${window.location.hostname}:5173`,
       width: 350,
       height: 500,
-      robotIconUrl: '/robot-icon.png' // Custom icon path
+      robotIconUrl: '/robot-icon.png', // Custom icon path
+      container: '#my-container'
     });
 
     return () => {
@@ -29,7 +30,8 @@ export function Demo() {
       iframeUrl: `http://${window.location.hostname}:5173`,
       placement,
       width: 400,
-      height: 600
+      height: 600,
+      container: '#my-container'
     });
   };
 
@@ -86,6 +88,8 @@ export function Demo() {
       >
         Toggle Iframe Visibility
       </button>
+
+      <div id="my-container" style={{ width: '200px', height: '150px', border: '1px solid' }}>My Container</div>
 
       <div style={{
         marginTop: '32px',
