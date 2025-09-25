@@ -24,10 +24,10 @@ from utils.utils import (generate_sse_data, should_apply_enhanced_prompt,
 from rag.rag import run_rag_analyzing, retrieveRAGResult
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    mcp_client = get_mcp_client()
+async def lifespan(_app: FastAPI):
+    client = get_mcp_client()
     # 异步上下文管理客户端连接
-    async with mcp_client as client:
+    async with client:
         # 初始化连接
         await client.ping()
         yield
@@ -74,7 +74,7 @@ def log_async(level: str, message: str, **kwargs):
     asyncio.create_task(log_to_management(level, message, **kwargs))
 
 
-def generate_qwen_prompt(query: str, memory, rag_result: list[str] = []):
+def generate_qwenvl_prompt(query: str, memory, rag_result: list[str] = []):
     history = memory.load_memory_variables({}).get("history", "")
 
     # 构造文本内容
@@ -84,7 +84,7 @@ def generate_qwen_prompt(query: str, memory, rag_result: list[str] = []):
     return prompt_text
 
 
-def generate_deepseek_prompt(
+def generate_qwen3_prompt(
     prompt: str,
     memory: WindowedSummaryMemory,
     rag_result: list[str],
@@ -97,7 +97,7 @@ def generate_deepseek_prompt(
 
 @app.get("/clean_context/{chat_id}")
 async def clean_context(chat_id: str):
-    user_memory_manager.clean_memory(chat_id, "deepseek-r1:8b")
+    user_memory_manager.clean_memory(chat_id, "qwen3:32b")
     user_memory_manager.clean_memory(chat_id, "qwen2.5vl:7b")
     return
 
@@ -115,8 +115,8 @@ async def analyze(request: Request):
             full_response = ""
             # Select model based on input
             # Keep the qwen instance temporarily
-            # llm = qwen_model if images else deepseek_model
-            llm = "deepseek-r1:8b"
+            # llm = qwen_model if images else qwen3_model
+            llm = "qwen3:32b"
             memory = user_memory_manager.get_memory(chat_id, llm)
 
             rag_result = []
@@ -134,7 +134,8 @@ async def analyze(request: Request):
                         rag_result = await retrieveRAGResult(text=user_prompt)
 
             rag_imgs = []
-            if rag_result:
+            print("rag res: -----------", rag_result)
+            if len(rag_result) > 0:
                 for res in rag_result:
                     print("rag result----------------", res)
                     if res.get("image"):
@@ -145,15 +146,17 @@ async def analyze(request: Request):
                     yield generate_sse_data(f"RAG image: {img['image']}, title: {img['title']} \n\n")
 
             filtered_rag_result = [res for res in rag_result if not res.get("image")]
+            print("filtered rag res: ---------", filtered_rag_result)
 
             try:
                 prompt = user_prompt
                 # Create the prompt based on model
                 if images:
-                    prompt = generate_qwen_prompt(user_prompt, memory, filtered_rag_result)
+                    prompt = generate_qwenvl_prompt(user_prompt, memory, filtered_rag_result)
                 else:
                     postgres_mcp_context: list[str] = []
                     if should_use_mcp_plugin(user_prompt):
+                        print("should use mcp----------")
                         async for item in run_postgres_mcp_tool(
                             user_prompt, postgres_mcp_context, filtered_rag_result
                         ):
@@ -165,7 +168,8 @@ async def analyze(request: Request):
                         yield 'data: {"type": "done"}\n\n'
                         return
                     elif should_apply_enhanced_prompt(user_prompt):
-                        prompt = generate_deepseek_prompt(
+                        print("should use enhanced prompt----------")
+                        prompt = generate_qwen3_prompt(
                             prompt=user_prompt,
                             memory=memory,
                             rag_result=filtered_rag_result
