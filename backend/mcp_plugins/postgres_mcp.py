@@ -1,15 +1,17 @@
 from utils.models import generate_with_ollama, generate_with_ollama_stream
 from utils.promptsArchive import (END_KEYWORD, get_mcp_prompt,
                                   get_summary_prompt)
-from utils.utils import clean_message, extract_json, get_tables_by_keys
+from utils.utils import clean_message, extract_json, get_tables_by_keys, get_mcp_config_by_keyword
 
 from .mcp_stream import call_tool_with_stream
-from utils.load_config import global_config
 
 async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_result: list[str]):
     context = ""
     times = 1
-    dbs = get_tables_by_keys(user_query, global_config.fuxi_keywords_table_list, global_config.fuxi_schemas) or global_config.fuxi_schemas
+    config = get_mcp_config_by_keyword(user_query)
+    db_key = list(config.keys())[0]
+    db_config = config[db_key]
+    dbs = get_tables_by_keys(user_query, db_config.get("keyword_maps"), db_config.get("schemas")) or config.get("schemas")
     print("dbs:-------------------------------------", dbs)
 
 
@@ -50,7 +52,7 @@ async def run_postgres_mcp_tool(user_query: str, context_list: list[str], rag_re
                 yield "loading: mcp_another_try \n\n"
 
             # yield f"正在使用MCP tool: {tool}, 参数: {json.dumps(args, ensure_ascii=False)}\n" yield f"loading: {getLoadingTextByTool(tool)} \n\n"
-            async for tool_output in call_tool_with_stream(tool, args):
+            async for tool_output in call_tool_with_stream(tool, db_key, args):
                 # yield f"TOOL_OUTPUT: {json.dumps(tool_output, ensure_ascii=False)}\n\n"
                 context_list.append(
                     f"tool: {tool}, args: {args}, output: {tool_output}\n"

@@ -12,7 +12,7 @@ async def generate_with_ollama(
     port=SERVER_INFO["port"],
 ):
     url = f"http://{host}:{port}/api/generate"
-    payload = {"model": model, "prompt": prompt, "images": image, "stream": False}
+    payload = {"model": model, "prompt": prompt, "images": image, "stream": False, "temperature": 0.2}
 
     try:
         async with httpx.AsyncClient(timeout=None) as client:
@@ -36,13 +36,13 @@ async def generate_with_ollama(
 
 async def generate_with_ollama_stream(
     prompt,
-    model="deepseek-r1:8b",
+    model="qwen3",
     image=[],
     host=SERVER_INFO["host"],
     port=SERVER_INFO["port"],
 ):
     url = f"http://{host}:{port}/api/generate"
-    payload = {"model": model, "prompt": prompt, "images": image, "stream": True}
+    payload = {"model": model, "prompt": prompt, "images": image, "stream": True, "temperature": 0.2}
 
     async with httpx.AsyncClient(timeout=None, proxy=None) as client:
         async with client.stream("POST", url, json=payload) as response:

@@ -48,7 +48,13 @@ def should_use_mcp_plugin(user_input: str) -> bool:
         bool - 是否触发 MCP 工具
     """
     lower_input = user_input.lower()
-    return any(keyword.lower() in lower_input for keyword in global_config.MCP_TRIGGER_KEYWORDS)
+    return any(value.get("keyword").lower() in lower_input for value in global_config.mcp_db_dict.values())
+
+def get_mcp_config_by_keyword(input: str):
+    lower_keyword = input.lower()
+    
+    return {key:value for key, value in global_config.mcp_db_dict.items()
+            if value.get("keyword").lower() in lower_keyword}
 
 def get_tables_by_keys(user_input: str, data_list, schema_list):
     lower_input = user_input.lower()

@@ -1,18 +1,39 @@
 import json
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import TypedDict, Dict, List, Union, Any
 
 global_config = None
+
+class FieldSchema(TypedDict):
+    title: str
+    type: str
+    length: Union[int, str]
+    introduction: str
+
+class TableSchema(TypedDict):
+    introduction: str
+    fields: List[FieldSchema]
+
+class TableMapping(TypedDict):
+    name: str
+    introduction: str
+
+class KeywordMapping(TypedDict):
+    key: str
+    tables: List[TableMapping]
+
+class SystemConfig(TypedDict):
+    keyword: str
+    url: str
+    schemas: Dict[str, TableSchema]
+    keyword_maps: List[KeywordMapping]
 
 @dataclass
 class Config:
     rag_url: str
-    mcp_url: str
-    MCP_TRIGGER_KEYWORDS: list[str]
+    mcp_db_dict: Dict[str, SystemConfig]
     PROMPT_TRIGGER_KEYWORDS: list[str]
-    fuxi_schemas: Any
-    fuxi_keywords_table_list: list[Any]
     rag_classification: list[str]
 
 class ConfigObject:
@@ -35,7 +56,6 @@ def load_config():
             content = re.sub(r'//\s+.*\n', '', content)
             # Load configuration at the beginning
             global_config = Config(**json.loads(content))
-            print("global mcp_url: -------", global_config.mcp_url)
             return
     except FileNotFoundError:
         print("Error: config.jsonc file not found")
