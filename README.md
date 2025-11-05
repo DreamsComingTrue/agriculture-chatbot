@@ -20,8 +20,8 @@
 1. Clone the repository  
 
 ```bash
-git clone https://github.com/your-org/agriculture-assistant.git
-cd agriculture-assistant
+git clone https://github.com/DreamsComingTrue/agriculture-chatbot.git
+cd agriculture-chatbot
 ```
 
 2. Follow the setup instructions in each sub-project's README:
