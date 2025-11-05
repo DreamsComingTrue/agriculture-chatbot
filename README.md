@@ -1,21 +1,55 @@
-# Agriculture Assistant
+# 🌾 Agriculture Assistant
 
-## Desc
+🤖 This repository contains a comprehensive Agriculture Assistant system leveraging Large Language Models (LLM) to provide intelligent agricultural advice and data analysis. The project is structured into three main sub-projects:
 
-This is a project leveraging the power of LLM to be an agriculture assistant.
+- 🎯 Frontend: A responsive chat interface for user interaction
+- ⚡ Backend: The core logic and LLM integration
+- 🔍 RAG: Retrieval-Augmented Generation system for knowledge retrieval
 
-## Skills
+## 🚀 Getting Started
 
-Frontend: React + Typescirpt + Tailwindcss + Vite + pnpm
-Backend: Python
-LLM: Ollama(`deepseek-r1`, `qwen2.5vl`) + RAG(`Qdrant`, Embedding models: `BAAI/bge-large-zh-v1.5`, `openai/clip-vit-base-patch32`) + MCP (Postgres-mcp, fastmcp)
+### 📋 Prerequisites
 
-## Features
+- Node.js (v18 or later)
+- pnpm (v8 or later)
+- Python 3.9+
+- Ollama (for local LLM deployment)
 
-- Text, image, audio input
-- Audio output (Mandrain support)
-- Packed as a component that you can use with any framework.
-- Easy to insert image or text to vector database, we provide a service on `8100` port to do embed and search.
-- Easy to config, we provide a JSON form configuration
+### Quick Start
 
-** Will update soon **
+1. Clone the repository  
+
+```bash
+git clone https://github.com/your-org/agriculture-assistant.git
+cd agriculture-assistant
+```
+
+2. Follow the setup instructions in each sub-project's README:
+
+- [Frontend](/frontend/README.md)
+- [Backend](/backend/README.md)
+- [RAG](/RAG/README.md)
+
+## ✨ Features Overview
+
+- 📱 Multi-modal input support (text, image, audio)
+- 🔊 Audio output with Mandarin support
+- 🧠 Knowledge retrieval via RAG system
+- 🔌 Integrated MCP tool to access Postgres DB
+- 🌐 Responsive UI with internationalization support
+
+## 🎥 Demo
+
+Retrieve images from RAG and enhance answers
+
+<img src="./assets/demo1.webp" width="450px" height="350px" alt="demo_rag_1"/>
+<img src="./assets/demo2.webp" width="450px" height="350px" alt="demo_rag_2"/>
+<img src="./assets/demo3.webp" width="450px" height="350px" alt="demo_rag_3"/>
+
+Utilize MCP Tool to get data from PostgresDB answering questions
+
+<img src="./assets/demo_mcp.webp" width="450px" height="350px" alt="demo_mcp"/>
+
+Export as a NPM package for seamlessly integrating
+
+<img src="./assets/demo_iframe.webp" width="450px" height="350px" alt="demo_iframe"/>
